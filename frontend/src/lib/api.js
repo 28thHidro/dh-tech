@@ -21,7 +21,11 @@ export async function getJSON(path, { signal } = {}) {
     if (err.name === 'AbortError') throw err;
     throw new Error('Không kết nối được máy chủ. Kiểm tra backend đã chạy chưa.');
   }
-  const body = await res.json().catch(() => ({}));
+  // Địa chỉ API sai thường trả về trang HTML thay vì JSON, báo lỗi rõ ràng thay vì im lặng
+  if (!res.headers.get('content-type')?.includes('application/json')) {
+    throw new Error('Không tìm thấy máy chủ API. Kiểm tra lại địa chỉ backend (VITE_API_URL).');
+  }
+  const body = await res.json();
   if (!res.ok) throw new Error(body.error || `Máy chủ trả lỗi ${res.status}`);
 
   cache.set(path, { data: body, at: Date.now() });
