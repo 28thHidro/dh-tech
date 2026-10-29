@@ -4,7 +4,7 @@
 
 Website bán điện thoại, laptop và phụ kiện, làm full-stack từ đầu: giao diện cho khách, trang quản trị cho admin, API và cơ sở dữ liệu riêng.
 
-🌐 **Website:** https://dhtech.id.vn (dự phòng: https://dh-tech-frontend.vercel.app)
+🌐 **Website:** https://dhtech.id.vn
 ⚙️ **API:** https://dh-tech-api.onrender.com/api/health
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
@@ -12,6 +12,10 @@ Website bán điện thoại, laptop và phụ kiện, làm full-stack từ đ�
 ![Node.js](https://img.shields.io/badge/Node.js-Express_5-339933?logo=nodedotjs&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-images-3448C5?logo=cloudinary&logoColor=white)
+
+<!--
+Ảnh giao diện: chụp rồi lưu vào docs/screenshots/ với tên trang-chu.png, chi-tiet.png,
+dien-thoai.png, admin.png, sau đó xoá hai dòng chú thích này để bảng ảnh hiện ra.
 
 ## Giao diện
 
@@ -22,21 +26,25 @@ Website bán điện thoại, laptop và phụ kiện, làm full-stack từ đ�
 | Trên điện thoại | Trang quản trị |
 |---|---|
 | ![Điện thoại](docs/screenshots/dien-thoai.png) | ![Quản trị](docs/screenshots/admin.png) |
+-->
 
 ## Tính năng
 
 **Khách hàng**
+- Trang chủ có video giới thiệu tự đổi theo thời gian, deal tuần dạng bento, linh vật Mèo Cam
 - Danh mục Điện thoại, Laptop, Phụ kiện (có danh mục con), lọc theo hãng và khoảng giá, sắp xếp theo giá
 - Tìm kiếm gõ đến đâu tìm đến đó
-- Trang chi tiết: chọn phiên bản (dung lượng, cấu hình) và màu; giá và tồn kho đổi theo từng lựa chọn
-- Giỏ hàng lưu trên trình duyệt, đặt hàng thật (không cần tài khoản)
+- Trang chi tiết: nhiều ảnh cho từng màu, chọn phiên bản và màu, bài mô tả, báo "Sắp về hàng" khi hết
+- Tài khoản khách hàng: đăng ký, đăng nhập (kéo dây đèn để mở form), xem lại đơn và trạng thái giao
+- Giỏ hàng lưu trên trình duyệt; mua được cả khi chưa đăng nhập
 - Giao diện responsive cho điện thoại, có chế độ tối
 
 **Quản trị (`/admin`)**
 - Đăng nhập bằng JWT, khoá tạm 15 phút sau 5 lần nhập sai
 - Thêm, sửa, xoá sản phẩm: phiên bản, màu, tồn kho từng SKU, thông số, ảnh
 - Upload ảnh thẳng lên Cloudinary bằng chữ ký do server tạo
-- Xem đơn hàng, đổi trạng thái; huỷ đơn thì hàng tự trả về kho
+- Soạn bài mô tả sản phẩm (tiêu đề, nội dung, ảnh)
+- Xem đơn hàng, đổi trạng thái; huỷ đơn thì hàng tự trả về kho; đánh dấu đơn của khách thành viên
 
 ## Kiến trúc
 
@@ -64,6 +72,8 @@ erDiagram
   product_colors ||--o{ product_skus : ""
   products ||--o{ product_images : ""
   products ||--o{ product_specs : ""
+  products ||--o{ product_sections : "bài mô tả"
+  customers ||--o{ orders : ""
   orders ||--o{ order_items : ""
   product_skus ||--o{ order_items : ""
 ```
@@ -76,7 +86,8 @@ erDiagram
 - Server tự tính lại giá từ database, không tin giá do trình duyệt gửi lên
 - Đặt hàng chạy trong **transaction** và khoá dòng (`SELECT … FOR UPDATE`): hai người cùng mua món cuối cùng thì chỉ một người thành công, kho không bị âm
 - Mọi câu SQL dùng tham số (`$1, $2…`) để chống SQL injection
-- Mật khẩu admin băm bằng bcrypt; API admin yêu cầu JWT
+- Mật khẩu (admin và khách) băm bằng bcrypt; đăng nhập sai nhiều lần bị khoá tạm theo IP
+- Token JWT của khách và admin tách riêng bằng `audience`: token khách không dùng được cho API quản trị
 - CORS chỉ cho phép domain của website; lỗi trả về không lộ chi tiết bên trong
 - Thông tin bí mật nằm trong biến môi trường, file `.env` không đưa lên GitHub
 
@@ -99,6 +110,7 @@ Cần Node.js 22 trở lên và một database PostgreSQL (ví dụ Neon gói mi
 ```powershell
 # 1. Tạo bảng và dữ liệu mẫu: chạy lần lượt trong SQL Editor của Neon
 #    database/schema.sql → database/seed.sql → database/seed-mo-rong.sql
+#    (database đang chạy từ bản cũ: chạy thêm các file trong database/migrations theo thứ tự)
 
 # 2. Backend
 cd backend
@@ -121,8 +133,10 @@ npm run dev                 # http://localhost:5173
 - [x] Giao diện React nối API thật
 - [x] Trang admin: JWT, quản lý sản phẩm, upload ảnh, quản lý đơn
 - [x] Deploy Vercel + Render + Neon
+- [x] Tài khoản khách hàng, đơn hàng của tôi
+- [x] Gắn tên miền riêng dhtech.id.vn
 - [ ] Trang cài đặt website trong admin (khẩu hiệu, banner, hotline)
-- [ ] Gắn tên miền riêng
+- [ ] Quên mật khẩu qua email, sửa thông tin cá nhân
 
 ## Ghi chú
 
