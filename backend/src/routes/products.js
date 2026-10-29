@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
             v.variants, col.colors,
             COALESCE(st.total_stock, 0) AS total_stock,
             (SELECT url FROM product_images WHERE product_id = p.id
-             ORDER BY color_id NULLS FIRST, sort_order LIMIT 1) AS image
+             ORDER BY sort_order, id LIMIT 1) AS image
      FROM products p
      JOIN categories c       ON c.id = p.category_id
      LEFT JOIN categories pc ON pc.id = c.parent_id
@@ -91,7 +91,10 @@ router.get('/:slug', async (req, res) => {
              FROM product_specs sp WHERE sp.product_id = p.id) AS specs,
             (SELECT COALESCE(json_agg(json_build_object('url', i.url, 'color_id', i.color_id)
                     ORDER BY i.sort_order), '[]'::json)
-             FROM product_images i WHERE i.product_id = p.id) AS images
+             FROM product_images i WHERE i.product_id = p.id) AS images,
+            (SELECT COALESCE(json_agg(json_build_object('title', se.title, 'body', se.body, 'image', se.image_url)
+                    ORDER BY se.sort_order), '[]'::json)
+             FROM product_sections se WHERE se.product_id = p.id) AS sections
      FROM products p
      JOIN categories c  ON c.id = p.category_id
      LEFT JOIN brands b ON b.id = p.brand_id

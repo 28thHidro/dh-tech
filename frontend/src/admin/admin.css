@@ -71,8 +71,8 @@
 @media (max-width: 640px) { .fgrid { grid-template-columns: minmax(0, 1fr); } }
 .pform label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
 .pform label small { font-weight: 400; color: var(--muted); font-size: 12px; }
-.pform input, .pform select { background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; color: var(--fg); font: inherit; font-size: 14px; min-width: 0; width: 100%; }
-.pform input:focus, .pform select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--tint); }
+.pform input, .pform select, .pform textarea { background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; color: var(--fg); font: inherit; font-size: 14px; min-width: 0; width: 100%; }
+.pform input:focus, .pform select:focus, .pform textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--tint); }
 .slug-input { display: flex; align-items: stretch; }
 .slug-input span { white-space: nowrap; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-right: 0; border-radius: 9px 0 0 9px; padding: 9px 10px; color: var(--muted); font-weight: 400; font-size: 13.5px; }
 .slug-input input { border-radius: 0 9px 9px 0; }
@@ -152,3 +152,24 @@
 .login-card .btn { margin-top: 10px; }
 .login-card .back { text-align: center; font-size: 13px; color: var(--on-ink-muted); margin-top: 6px; }
 .login-card .back:hover { color: var(--accent); }
+
+/* Tải ảnh theo màu */
+.upload-ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.upload-ctl select { width: auto !important; max-width: 240px; }
+
+/* Bài viết mô tả */
+.pform textarea { resize: vertical; line-height: 1.55; }
+.sections { display: grid; gap: 12px; }
+.section-row { display: grid; grid-template-columns: minmax(0, 1fr) 180px auto; gap: 12px; align-items: start; border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.section-fields { display: grid; gap: 8px; }
+.section-img { display: grid; gap: 6px; }
+.section-img img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; background: #fff; }
+.section-img > .muted { height: 110px; display: grid; place-items: center; border: 1.5px dashed var(--line); border-radius: 8px; font-size: 12.5px; }
+.section-actions { display: grid; gap: 6px; }
+.section-actions .icon-btn:hover:not(:disabled) { color: var(--fg); border-color: var(--accent); }
+.section-actions .icon-btn:last-child:hover:not(:disabled) { color: var(--bad); border-color: var(--bad); }
+@media (max-width: 700px) {
+  .section-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .section-img { grid-column: 1; }
+  .section-actions { grid-row: 1; grid-column: 2; }
+}

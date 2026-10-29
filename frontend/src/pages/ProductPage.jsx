@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import ProductArt from '../components/ProductArt.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import Icon from '../components/Icon.jsx';
 import { ErrorBox } from '../components/States.jsx';
-import { useApi } from '../lib/api.js';
+import { cdn, useApi } from '../lib/api.js';
 import { useCart } from '../lib/cart.jsx';
 import { brandLabel, percentOff, vnd } from '../lib/format.js';
 
@@ -43,10 +43,17 @@ function ProductDetail({ p }) {
   const variant = p.variants.find((v) => v.id === variantId);
   const color = p.colors.find((c) => c.id === colorId);
   const stock = stockOf(variantId, colorId);
-  // Ảnh theo màu đang chọn; màu đó chưa có ảnh riêng thì dùng ảnh chung
-  const imageFor = (cId) => p.images.find((i) => i.color_id === cId)?.url ?? p.images.find((i) => !i.color_id)?.url;
-  const image = imageFor(colorId);
   const sku = p.skus.find((s) => s.variant_id === variantId && s.color_id === colorId);
+
+  // Bộ ảnh của một màu: các góc chụp gắn với màu đó, rồi tới ảnh chung.
+  // Màu chưa có ảnh riêng thì chỉ dùng ảnh chung.
+  const photosOf = (cId) => {
+    const own = p.images.filter((i) => i.color_id === cId).map((i) => i.url);
+    const shared = p.images.filter((i) => !i.color_id).map((i) => i.url);
+    return [...own, ...shared];
+  };
+  const photos = photosOf(colorId);
+  const image = photos[0];
 
   useEffect(() => { document.title = `${p.name} | DH tech`; return () => { document.title = 'DH tech - Công nghệ đến gần bạn hơn'; }; }, [p.name]);
 
@@ -60,11 +67,8 @@ function ProductDetail({ p }) {
     price: variant.price, listPrice: variant.list_price,
   });
 
-  const stockNote = stock === 0 ? { cls: 'out', text: 'Tạm hết hàng phiên bản này. Chọn màu hoặc dung lượng khác.' }
-    : stock <= 3 ? { cls: 'low', text: `Chỉ còn ${stock} máy, đặt sớm kẻo hết` }
-    : { cls: 'in', text: 'Còn hàng, giao nhanh 2 giờ nội thành TP.HCM' };
-
   const catLink = p.brand_slug ? `/danh-muc/${p.category}?brand=${p.brand_slug}` : `/danh-muc/${p.category}`;
+  const sections = p.sections ?? [];
 
   return (
     <div className="wrap">
@@ -75,41 +79,34 @@ function ProductDetail({ p }) {
       </div>
 
       <div className="d-grid">
-        <div className="panel gallery">
-          <ProductArt product={p} color={color.hex} image={image} width={900} className="d-art" />
-          <div className="thumbs">
-            {p.colors.map((c) => (
-              <button key={c.id} aria-label={c.name} aria-pressed={c.id === colorId} onClick={() => setColorId(c.id)}>
-                <ProductArt product={p} color={c.hex} image={imageFor(c.id)} width={160} className="thumb-art" />
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* key: đổi màu thì bộ ảnh quay về ảnh đầu tiên của màu đó */}
+        <Gallery key={colorId} p={p} color={color} photos={photos} />
 
         <div className="panel d-info">
           <h1>{p.name}</h1>
           <p className="line">{p.short_desc}</p>
 
-          <div className="opt-label">Chọn phiên bản</div>
-          <div className="opts">
-            {p.variants.map((v) => {
-              const anyStock = p.colors.some((c) => stockOf(v.id, c.id) > 0);
-              return (
-                <button key={v.id} className={`opt${anyStock ? '' : ' none'}`} aria-pressed={v.id === variantId} onClick={() => setVariantId(v.id)}>
-                  {v.name}<small className="num">{anyStock ? vnd(v.price) : 'Hết hàng'}</small>
-                </button>
-              );
-            })}
-          </div>
+          {p.variants.length > 1 && (
+            <>
+              <div className="opt-label">Phiên bản</div>
+              <div className="opts">
+                {p.variants.map((v) => (
+                  <button key={v.id} className="opt center" aria-pressed={v.id === variantId} onClick={() => setVariantId(v.id)}>{v.name}</button>
+                ))}
+              </div>
+            </>
+          )}
 
-          <div className="opt-label">Chọn màu</div>
-          <div className="opts">
+          <div className="opt-label">Màu sắc: <span className="muted-inline">{color.name}</span></div>
+          <div className="opts colors">
             {p.colors.map((c) => {
-              const n = stockOf(variantId, c.id);
+              const thumb = photosOf(c.id)[0];
               return (
-                <button key={c.id} className={`opt${n === 0 ? ' none' : ''}`} aria-pressed={c.id === colorId} onClick={() => setColorId(c.id)}>
-                  <span><i className="sw" style={{ background: c.hex }} />{c.name}</span>
-                  <small>{n === 0 ? 'Hết hàng' : n <= 3 ? `Còn ${n} máy` : 'Còn hàng'}</small>
+                <button key={c.id} className="opt color-opt" aria-pressed={c.id === colorId} onClick={() => setColorId(c.id)}>
+                  {thumb
+                    ? <ProductArt product={p} color={c.hex} image={thumb} width={96} className="copt-art" />
+                    : <i className="sw big" style={{ background: c.hex }} />}
+                  <span>{c.name}</span>
                 </button>
               );
             })}
@@ -118,52 +115,69 @@ function ProductDetail({ p }) {
           <div className="pbox">
             <div className="row"><b className="num">{vnd(variant.price)}</b>{p.discount_amount > 0 && <s className="num">{vnd(variant.list_price)}</s>}</div>
             {p.discount_amount > 0 && <div className="save num">Tiết kiệm {vnd(p.discount_amount)} ({percentOff(variant.list_price, p.discount_amount)}%)</div>}
-            <div className={`stock ${stockNote.cls}`}>{stockNote.text}</div>
+            {stock > 0 && stock <= 3 && <div className="stock low">Chỉ còn {stock} máy, đặt sớm kẻo hết</div>}
           </div>
 
-          <div className="offers">
-            <h3>Khuyến mãi</h3>
-            <ol>
-              {p.gift_text && <li>{p.gift_text}</li>}
-              <li>Giảm thêm 5% khi mua kèm phụ kiện</li>
-              {p.category === 'dien-thoai' || p.category === 'laptop' ? <li>Trả góp 0% qua thẻ tín dụng, kỳ hạn 6 – 12 tháng</li> : <li>Miễn phí giao hàng cho đơn từ 300.000đ</li>}
-            </ol>
-          </div>
-
-          <div className="buy-row">
-            <button className="btn btn-primary" disabled={stock === 0} onClick={() => { addToCart(); cart.setOpen(true); }}>
-              {stock === 0 ? 'TẠM HẾT HÀNG' : 'MUA NGAY'}
-              <small>{stock === 0 ? 'Chọn màu hoặc dung lượng khác' : 'Giao nhanh 2 giờ hoặc nhận tại cửa hàng'}</small>
-            </button>
-            <button className="btn btn-line" disabled={stock === 0} onClick={addToCart} aria-label="Thêm vào giỏ hàng"><Icon name="cartPlus" size={22} /></button>
-          </div>
-          {(p.category === 'dien-thoai' || p.category === 'laptop') && (
-            <div className="inst-row">
-              <button className="btn" onClick={() => cart.notify('Gọi 1900 0000 để được tư vấn trả góp')}>
-                <span className="num">Trả góp 0% · từ {vnd(Math.round(variant.price / 12 / 1000) * 1000)}/tháng</span>
-              </button>
+          {stock === 0 ? (
+            <div className="restock" role="status">
+              <div className="restock-head">
+                <b>SẮP VỀ HÀNG</b>
+                <span>{p.name} {variant.name} màu {color.name}</span>
+                <span>Vui lòng liên hệ <a className="num" href="tel:19000000">1900 0000</a> để đặt trước</span>
+              </div>
+              <div className="restock-actions">
+                <a className="btn btn-primary" href="tel:19000000">Gọi đặt trước</a>
+                <Link className="btn btn-line" to={catLink}>Xem sản phẩm khác</Link>
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="offers">
+                <h3>Khuyến mãi</h3>
+                <ol>
+                  {p.gift_text && <li>{p.gift_text}</li>}
+                  <li>Giảm thêm 5% khi mua kèm phụ kiện</li>
+                  {p.category === 'dien-thoai' || p.category === 'laptop' ? <li>Trả góp 0% qua thẻ tín dụng, kỳ hạn 6 – 12 tháng</li> : <li>Miễn phí giao hàng cho đơn từ 300.000đ</li>}
+                </ol>
+              </div>
+              <div className="buy-row">
+                <button className="btn btn-primary" onClick={() => { addToCart(); cart.setOpen(true); }}>
+                  MUA NGAY<small>Giao nhanh 2 giờ hoặc nhận tại cửa hàng</small>
+                </button>
+                <button className="btn btn-line" onClick={addToCart} aria-label="Thêm vào giỏ hàng"><Icon name="cartPlus" size={22} /></button>
+              </div>
+              {(p.category === 'dien-thoai' || p.category === 'laptop') && (
+                <div className="inst-row">
+                  <button className="btn" onClick={() => cart.notify('Gọi 1900 0000 để được tư vấn trả góp')}>
+                    <span className="num">Trả góp 0% · từ {vnd(Math.round(variant.price / 12 / 1000) * 1000)}/tháng</span>
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      <div className="d-grid">
-        <div className="panel">
-          <h2>Thông số kỹ thuật</h2>
-          {p.specs.length ? (
-            <table className="specs"><tbody>
-              {p.specs.map((s) => <tr key={s.label}><td>{s.label}</td><td>{s.value}</td></tr>)}
-            </tbody></table>
-          ) : <p className="muted">Thông số chi tiết đang được cập nhật. Gọi 1900 0000 để được tư vấn.</p>}
-        </div>
-        <div className="panel">
-          <h2>Cam kết của DH tech</h2>
-          <ol className="promise">
-            <li>Máy mới 100%, nguyên hộp, hàng chính hãng.</li>
-            <li>Bảo hành 12 tháng tại trung tâm bảo hành chính hãng.</li>
-            <li>1 đổi 1 trong 30 ngày nếu có lỗi phần cứng từ nhà sản xuất.</li>
-            <li>Giá đã bao gồm VAT.</li>
-          </ol>
+      <div className={`d-lower${sections.length ? '' : ' no-desc'}`}>
+        {sections.length > 0 && <Description name={p.name} sections={sections} />}
+        <div className="d-side">
+          <div className="panel">
+            <h2>Thông số kỹ thuật</h2>
+            {p.specs.length ? (
+              <table className="specs"><tbody>
+                {p.specs.map((s) => <tr key={s.label}><td>{s.label}</td><td>{s.value}</td></tr>)}
+              </tbody></table>
+            ) : <p className="muted">Thông số chi tiết đang được cập nhật. Gọi 1900 0000 để được tư vấn.</p>}
+          </div>
+          <div className="panel">
+            <h2>Cam kết của DH tech</h2>
+            <ol className="promise">
+              <li>Máy mới 100%, nguyên hộp, hàng chính hãng.</li>
+              <li>Bảo hành 12 tháng tại trung tâm bảo hành chính hãng.</li>
+              <li>1 đổi 1 trong 30 ngày nếu có lỗi phần cứng từ nhà sản xuất.</li>
+              <li>Giá đã bao gồm VAT.</li>
+            </ol>
+          </div>
         </div>
       </div>
 
@@ -174,5 +188,94 @@ function ProductDetail({ p }) {
         </section>
       )}
     </div>
+  );
+}
+
+// Khung ảnh lớn + nút trái/phải + dãy ảnh nhỏ. Vuốt ngang trên điện thoại cũng chuyển ảnh.
+function Gallery({ p, color, photos }) {
+  const [i, setI] = useState(0);
+  const touchX = useRef(null);
+  const n = photos.length;
+  const go = (d) => setI((x) => (x + d + n) % n);
+
+  if (n === 0) {
+    return (
+      <div className="panel gallery">
+        <ProductArt product={p} color={color.hex} width={900} className="d-art" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="panel gallery">
+      <div
+        className="stage"
+        onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+        onTouchEnd={(e) => {
+          const dx = e.changedTouches[0].clientX - (touchX.current ?? 0);
+          if (n > 1 && Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+          touchX.current = null;
+        }}
+      >
+        <ProductArt product={p} color={color.hex} image={photos[i]} width={900} className="d-art" />
+        {n > 1 && (
+          <>
+            <button className="nav prev" onClick={() => go(-1)} aria-label="Ảnh trước">‹</button>
+            <button className="nav next" onClick={() => go(1)} aria-label="Ảnh sau">›</button>
+            <span className="count num">{i + 1}/{n}</span>
+          </>
+        )}
+      </div>
+      {n > 1 && (
+        <div className="thumbs">
+          {photos.map((url, k) => (
+            <button key={url + k} aria-label={`Xem ảnh ${k + 1}`} aria-pressed={k === i} onClick={() => setI(k)}>
+              <ProductArt product={p} image={url} width={160} className="thumb-art" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Bài viết mô tả: dài quá thì thu gọn, bấm "Xem thêm" để mở hết
+function Description({ name, sections }) {
+  const [open, setOpen] = useState(false);
+  const [long, setLong] = useState(false);
+  const ref = useRef();
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setLong(el.scrollHeight > 760);
+    check();
+    // Ảnh tải xong làm bài dài ra, nên đo lại
+    const imgs = [...el.querySelectorAll('img')];
+    imgs.forEach((img) => img.addEventListener('load', check));
+    return () => imgs.forEach((img) => img.removeEventListener('load', check));
+  }, [sections]);
+
+  return (
+    <section className="panel desc">
+      <h2>Đặc điểm nổi bật</h2>
+      <div ref={ref} className={`desc-body${long && !open ? ' clamp' : ''}`}>
+        {sections.map((se, k) => (
+          <article key={k} className="desc-sec">
+            {se.title && <h3>{se.title}</h3>}
+            {se.body && se.body.split(/\n+/).map((line, j) => <p key={j}>{line}</p>)}
+            {se.image && <img src={cdn(se.image, 1000, false)} alt={se.title || name} loading="lazy" decoding="async" />}
+          </article>
+        ))}
+      </div>
+      {long && (
+        <button className="btn btn-line desc-toggle" onClick={() => {
+          if (open) ref.current.parentElement.scrollIntoView({ block: 'start' });
+          setOpen(!open);
+        }}>
+          {open ? 'Thu gọn' : 'Xem thêm'}
+        </button>
+      )}
+    </section>
   );
 }

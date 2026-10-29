@@ -13,7 +13,7 @@ const EMPTY = {
   is_hot: false, is_active: true,
   variants: [{ _k: k(), name: '', list_price: '' }],
   colors: [{ _k: k(), name: '', hex: '#1C1D20' }],
-  stock: [[0]], specs: [], images: [],
+  stock: [[0]], specs: [], images: [], sections: [],
 };
 
 function fromServer(p) {
@@ -25,6 +25,7 @@ function fromServer(p) {
     colors: p.colors.map((c) => ({ ...c, _k: k() })),
     specs: p.specs.map((s) => ({ ...s, _k: k() })),
     images: p.images.map((i) => ({ ...i, _k: k() })),
+    sections: (p.sections ?? []).map((se) => ({ ...se, _k: k() })),
   };
 }
 
@@ -39,6 +40,7 @@ function toServer(f) {
     stock: f.stock.map((row) => row.map((n) => Number(n) || 0)),
     specs: f.specs.map(strip),
     images: f.images.map(strip),
+    sections: f.sections.map(strip),
   };
 }
 
@@ -60,7 +62,10 @@ function ProductForm({ id }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [uploadColor, setUploadColor] = useState(''); // ảnh tải lên được gắn sẵn màu này
   const fileRef = useRef();
+  const sectionFileRef = useRef();
+  const [sectionTarget, setSectionTarget] = useState(null); // đoạn mô tả đang chọn ảnh
 
   useEffect(() => {
     adminFetch('/api/admin/meta').then(setMeta).catch(onAuthError);
@@ -103,7 +108,8 @@ function ProductForm({ id }) {
     for (const file of list) {
       try {
         const url = await uploadImage(file);
-        setForm((f) => ({ ...f, images: [...f.images, { _k: k(), url, color_index: null }] }));
+        const color_index = uploadColor === '' ? null : Number(uploadColor);
+        setForm((f) => ({ ...f, images: [...f.images, { _k: k(), url, color_index }] }));
       } catch (err) {
         setStatus({ type: 'error', text: err.message });
         onAuthError(err);
@@ -114,12 +120,32 @@ function ProductForm({ id }) {
     fileRef.current.value = '';
   };
 
-  const moveImage = (i, dir) => {
-    const imgs = [...form.images];
+  // Đổi chỗ hai dòng trong một danh sách (ảnh, đoạn mô tả)
+  const move = (list, i, dir) => {
+    const arr = [...form[list]];
     const j = i + dir;
-    if (j < 0 || j >= imgs.length) return;
-    [imgs[i], imgs[j]] = [imgs[j], imgs[i]];
-    set({ images: imgs });
+    if (j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    set({ [list]: arr });
+  };
+  const moveImage = (i, dir) => move('images', i, dir);
+
+  // Ảnh cho một đoạn mô tả
+  const onSectionFile = async (file) => {
+    const target = sectionTarget;
+    sectionFileRef.current.value = '';
+    if (!file || target == null) return;
+    setUploading((n) => n + 1);
+    setStatus({ type: '', text: '' });
+    try {
+      const url = await uploadImage(file);
+      setForm((f) => ({ ...f, sections: f.sections.map((se) => (se._k === target ? { ...se, image_url: url } : se)) }));
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message });
+      onAuthError(err);
+    } finally {
+      setUploading((n) => n - 1);
+    }
   };
 
   const save = async (e) => {
@@ -267,12 +293,22 @@ function ProductForm({ id }) {
       <section className="psec">
         <div className="psec-head">
           <h2>Ảnh sản phẩm</h2>
-          <button type="button" className="btn btn-line sm" onClick={() => fileRef.current.click()} disabled={uploading > 0}>
-            {uploading > 0 ? `Đang tải lên ${uploading} ảnh…` : '+ Tải ảnh lên'}
-          </button>
+          <div className="upload-ctl">
+            <select aria-label="Gắn ảnh sắp tải lên với màu" value={uploadColor} onChange={(e) => setUploadColor(e.target.value)}>
+              <option value="">Tải lên làm ảnh chung</option>
+              {form.colors.map((c, ci) => <option key={c._k} value={ci}>Tải lên cho màu {c.name || ci + 1}</option>)}
+            </select>
+            <button type="button" className="btn btn-line sm" onClick={() => fileRef.current.click()} disabled={uploading > 0}>
+              {uploading > 0 ? `Đang tải lên ${uploading} ảnh…` : '+ Tải ảnh lên'}
+            </button>
+          </div>
           <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => onFiles(e.target.files)} />
         </div>
-        <p className="muted">Ảnh đầu tiên là ảnh đại diện. Gắn ảnh với một màu để khi khách chọn màu đó, ảnh tự đổi theo. Nên dùng ảnh nền trắng hoặc trong suốt, tối đa 5MB.</p>
+        <p className="muted">
+          Mỗi màu có thể có <b>nhiều ảnh (nhiều góc chụp)</b>: chọn màu ở ô bên trái nút "Tải ảnh lên" rồi chọn nhiều ảnh một lúc, hoặc đổi màu ở ô dưới từng ảnh.
+          Khách chọn màu nào thì thấy các ảnh của màu đó, sau đó tới ảnh chung. Ảnh đầu tiên là ảnh đại diện trên trang chủ.
+          Nên dùng ảnh nền trắng hoặc trong suốt, tối đa 5MB.
+        </p>
         {form.images.length === 0 ? (
           <div className="drop" onClick={() => fileRef.current.click()} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}>
             Chưa có ảnh. Kéo thả ảnh vào đây hoặc bấm để chọn. Khi chưa có ảnh, website dùng hình minh hoạ.
@@ -308,6 +344,41 @@ function ProductForm({ id }) {
               <input aria-label="Tên thông số" value={s.label} onChange={(e) => setRow('specs', i, { label: e.target.value })} placeholder="Màn hình" />
               <input aria-label="Giá trị" value={s.value} onChange={(e) => setRow('specs', i, { value: e.target.value })} placeholder="6.3 inch" />
               <button type="button" className="icon-btn" onClick={() => set({ specs: form.specs.filter((_, j) => j !== i) })} aria-label="Xoá dòng">×</button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 7. Bài viết mô tả */}
+      <section className="psec">
+        <div className="psec-head">
+          <h2>Bài viết mô tả</h2>
+          <button type="button" className="btn btn-line sm" onClick={() => set({ sections: [...form.sections, { _k: k(), title: '', body: '', image_url: '' }] })}>+ Thêm đoạn</button>
+        </div>
+        <p className="muted">Hiện ở mục "Đặc điểm nổi bật" trên trang sản phẩm. Mỗi đoạn gồm tiêu đề, nội dung (xuống dòng để tách đoạn) và một ảnh minh hoạ tuỳ chọn. Ảnh ở đây giữ nguyên khung hình, nên dùng ảnh ngang.</p>
+        <input ref={sectionFileRef} type="file" accept="image/*" hidden onChange={(e) => onSectionFile(e.target.files[0])} />
+        <div className="sections">
+          {form.sections.length === 0 && <p className="muted">Chưa có đoạn nào. Ví dụ: "Màn hình lớn nhất từ trước tới nay" kèm một đoạn giới thiệu và ảnh.</p>}
+          {form.sections.map((se, i) => (
+            <div className="section-row" key={se._k}>
+              <div className="section-fields">
+                <input aria-label={`Tiêu đề đoạn ${i + 1}`} value={se.title} maxLength={200} onChange={(e) => setRow('sections', i, { title: e.target.value })} placeholder="Tiêu đề, ví dụ: Chip A20 Pro mạnh mẽ" />
+                <textarea aria-label={`Nội dung đoạn ${i + 1}`} value={se.body} maxLength={3000} rows={4} onChange={(e) => setRow('sections', i, { body: e.target.value })} placeholder="Nội dung giới thiệu…" />
+              </div>
+              <div className="section-img">
+                {se.image_url
+                  ? <img src={cdn(se.image_url, 300, false)} alt={`Ảnh đoạn ${i + 1}`} />
+                  : <span className="muted">Chưa có ảnh</span>}
+                <div className="img-actions">
+                  <button type="button" disabled={uploading > 0} onClick={() => { setSectionTarget(se._k); sectionFileRef.current.click(); }}>{se.image_url ? 'Đổi ảnh' : 'Thêm ảnh'}</button>
+                  {se.image_url && <button type="button" onClick={() => setRow('sections', i, { image_url: '' })}>Bỏ ảnh</button>}
+                </div>
+              </div>
+              <div className="section-actions">
+                <button type="button" className="icon-btn" onClick={() => move('sections', i, -1)} disabled={i === 0} aria-label="Đưa lên">↑</button>
+                <button type="button" className="icon-btn" onClick={() => move('sections', i, 1)} disabled={i === form.sections.length - 1} aria-label="Đưa xuống">↓</button>
+                <button type="button" className="icon-btn" onClick={() => set({ sections: form.sections.filter((_, j) => j !== i) })} aria-label="Xoá đoạn">×</button>
+              </div>
             </div>
           ))}
         </div>

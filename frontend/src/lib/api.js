@@ -54,10 +54,13 @@ export async function postJSON(path, data) {
 //   c_pad (1)    đặt sản phẩm vào giữa khung vuông nhỏ hơn một chút
 //   c_pad (2)    thêm lề trắng đều 4 cạnh -> mọi ảnh cùng cỡ, cùng vị trí dù cắt tay lệch nhau
 //   f_auto,q_auto  tự chọn định dạng và chất lượng nhẹ nhất
-export const cdn = (url, width = 600) => {
+// cdn(url, width, false): ảnh minh hoạ trong bài mô tả, chỉ thu nhỏ, giữ nguyên khung hình
+export const cdn = (url, width = 600, product = true) => {
   if (!url?.includes('/upload/')) return url;
   const inner = Math.round(width * 0.9);
-  const steps = `e_trim:10/c_pad,w_${inner},h_${inner},b_white/c_pad,w_${width},h_${width},b_white/f_auto,q_auto`;
+  const steps = product
+    ? `e_trim:10/c_pad,w_${inner},h_${inner},b_white/c_pad,w_${width},h_${width},b_white/f_auto,q_auto`
+    : `c_limit,w_${width}/f_auto,q_auto`;
   return url.replace('/upload/', `/upload/${steps}/`);
 };
 

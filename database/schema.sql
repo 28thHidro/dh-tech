@@ -5,7 +5,7 @@
 -- =====================================================================
 
 DROP TABLE IF EXISTS order_items, orders, admins,
-  product_specs, product_images, product_skus,
+  product_sections, product_specs, product_images, product_skus,
   product_colors, product_variants, products,
   brands, categories CASCADE;
 
@@ -113,6 +113,19 @@ CREATE TABLE product_specs (
 );
 
 -- ---------------------------------------------------------------------
+-- Bài viết mô tả sản phẩm: nhiều đoạn, mỗi đoạn có tiêu đề, nội dung và một ảnh
+-- (giống phần "Đặc điểm nổi bật" của các trang bán hàng lớn)
+-- ---------------------------------------------------------------------
+CREATE TABLE product_sections (
+  id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  product_id  INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  title       VARCHAR(200),
+  body        TEXT CHECK (length(body) <= 3000),
+  image_url   TEXT,
+  sort_order  INT NOT NULL DEFAULT 0
+);
+
+-- ---------------------------------------------------------------------
 -- Tài khoản quản trị. Chỉ lưu mật khẩu đã băm (bcrypt), không lưu mật khẩu thật.
 -- ---------------------------------------------------------------------
 CREATE TABLE admins (
@@ -163,4 +176,5 @@ CREATE INDEX idx_colors_product     ON product_colors(product_id);
 CREATE INDEX idx_skus_product       ON product_skus(product_id);
 CREATE INDEX idx_images_product     ON product_images(product_id);
 CREATE INDEX idx_specs_product      ON product_specs(product_id);
+CREATE INDEX idx_sections_product   ON product_sections(product_id);
 CREATE INDEX idx_order_items_order  ON order_items(order_id);

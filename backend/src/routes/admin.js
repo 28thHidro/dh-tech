@@ -37,7 +37,7 @@ router.get('/products', async (req, res) => {
             (SELECT MIN(list_price) FROM product_variants WHERE product_id = p.id) AS min_list_price,
             (SELECT COALESCE(SUM(stock), 0)::int FROM product_skus WHERE product_id = p.id) AS total_stock,
             (SELECT COUNT(*)::int FROM product_skus WHERE product_id = p.id AND stock = 0) AS out_of_stock_skus,
-            (SELECT url FROM product_images WHERE product_id = p.id ORDER BY color_id NULLS FIRST, sort_order LIMIT 1) AS image,
+            (SELECT url FROM product_images WHERE product_id = p.id ORDER BY sort_order, id LIMIT 1) AS image,
             (SELECT hex FROM product_colors WHERE product_id = p.id ORDER BY sort_order LIMIT 1) AS hex,
             c.slug AS category, b.slug AS brand_slug
      FROM products p
@@ -58,12 +58,13 @@ router.get('/products/:id', async (req, res) => {
   const { rows: [p] } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
   if (!p) return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
 
-  const [variants, colors, skus, specs, images] = await Promise.all([
+  const [variants, colors, skus, specs, images, sections] = await Promise.all([
     pool.query('SELECT id, name, list_price FROM product_variants WHERE product_id = $1 ORDER BY sort_order, id', [id]),
     pool.query('SELECT id, name, hex FROM product_colors WHERE product_id = $1 ORDER BY sort_order, id', [id]),
     pool.query('SELECT variant_id, color_id, stock FROM product_skus WHERE product_id = $1', [id]),
     pool.query('SELECT label, value FROM product_specs WHERE product_id = $1 ORDER BY sort_order, id', [id]),
     pool.query('SELECT url, color_id FROM product_images WHERE product_id = $1 ORDER BY sort_order, id', [id]),
+    pool.query('SELECT title, body, image_url FROM product_sections WHERE product_id = $1 ORDER BY sort_order, id', [id]),
   ]);
 
   // Tồn kho dạng bảng: stock[vị trí phiên bản][vị trí màu]
@@ -78,6 +79,7 @@ router.get('/products/:id', async (req, res) => {
     stock,
     specs: specs.rows,
     images: images.rows.map((i) => ({ url: i.url, color_index: i.color_id == null ? null : colorIndex.get(i.color_id) ?? null })),
+    sections: sections.rows.map((se) => ({ title: se.title ?? '', body: se.body ?? '', image_url: se.image_url ?? '' })),
   });
 });
 
@@ -86,6 +88,7 @@ router.get('/products/:id', async (req, res) => {
 // ---------------------------------------------------------------------
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const HEX = /^#[0-9A-Fa-f]{6}$/;
+const CLOUDINARY = /^https:\/\/res\.cloudinary\.com\//;
 const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
 function validate(body) {
@@ -106,6 +109,7 @@ function validate(body) {
     stock: Array.isArray(b.stock) ? b.stock : [],
     specs: Array.isArray(b.specs) ? b.specs : [],
     images: Array.isArray(b.images) ? b.images : [],
+    sections: Array.isArray(b.sections) ? b.sections : [],
   };
 
   if (!Number.isInteger(out.category_id)) errors.push('Chọn danh mục');
@@ -146,10 +150,19 @@ function validate(body) {
 
   out.images = out.images.map((img) => {
     const url = str(img?.url, 500);
-    if (!/^https:\/\/res\.cloudinary\.com\//.test(url)) errors.push('Ảnh phải được upload qua Cloudinary');
+    if (!CLOUDINARY.test(url)) errors.push('Ảnh phải được upload qua Cloudinary');
     const ci = img?.color_index;
     return { url, color_index: Number.isInteger(ci) && ci >= 0 && ci < out.colors.length ? ci : null };
   });
+
+  // Bài viết mô tả: bỏ qua đoạn trống hoàn toàn; ảnh (nếu có) phải nằm trên Cloudinary
+  out.sections = out.sections
+    .map((se) => ({ title: str(se?.title, 200), body: str(se?.body, 3000), image_url: str(se?.image_url, 500) }))
+    .filter((se) => se.title || se.body || se.image_url);
+  if (out.sections.length > 30) errors.push('Bài mô tả tối đa 30 đoạn');
+  for (const se of out.sections) {
+    if (se.image_url && !CLOUDINARY.test(se.image_url)) errors.push('Ảnh trong bài mô tả phải được upload qua Cloudinary');
+  }
 
   return { data: out, errors: [...new Set(errors)] };
 }
@@ -221,6 +234,11 @@ async function saveProduct(client, id, d) {
   for (const [i, img] of d.images.entries()) {
     await client.query('INSERT INTO product_images (product_id, color_id, url, sort_order) VALUES ($1,$2,$3,$4)',
       [id, img.color_index == null ? null : colorIds[img.color_index], img.url, i + 1]);
+  }
+  await client.query('DELETE FROM product_sections WHERE product_id=$1', [id]);
+  for (const [i, se] of d.sections.entries()) {
+    await client.query('INSERT INTO product_sections (product_id, title, body, image_url, sort_order) VALUES ($1,$2,$3,$4,$5)',
+      [id, se.title || null, se.body || null, se.image_url || null, i + 1]);
   }
   return id;
 }

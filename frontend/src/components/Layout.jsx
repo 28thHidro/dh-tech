@@ -5,6 +5,7 @@ import logo from '../../assets/dh-tech-logo.png';
 import Icon from './Icon.jsx';
 import CategoryMenu from './CategoryMenu.jsx';
 import CartDrawer from './CartDrawer.jsx';
+import MascotDock from './MascotDock.jsx';
 import { useCart } from '../lib/cart.jsx';
 import { getToken } from '../lib/admin.js';
 
@@ -151,6 +152,7 @@ export default function Layout() {
         <button onClick={() => cart.setOpen(true)}><Icon name="cart" size={21} />Giỏ hàng<span className="badge num">{cart.count}</span></button>
       </nav>
 
+      <MascotDock />
       {menuOpen && <MenuDrawer onClose={() => setMenuOpen(false)} />}
       {cart.open && <CartDrawer />}
       {cart.toast && <div className={`toast${cart.open ? ' top' : ''}`} role="status">{cart.toast}</div>}
