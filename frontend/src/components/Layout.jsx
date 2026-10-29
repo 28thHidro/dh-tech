@@ -6,6 +6,7 @@ import Icon from './Icon.jsx';
 import CategoryMenu from './CategoryMenu.jsx';
 import CartDrawer from './CartDrawer.jsx';
 import { useCart } from '../lib/cart.jsx';
+import { getToken } from '../lib/admin.js';
 
 function Logo() {
   return <img className="logo" src={logo} alt="DH tech" width="600" height="138" />;
@@ -19,8 +20,11 @@ function SearchBox({ inputRef }) {
   const [q, setQ] = useState(urlQ);
   const timer = useRef();
 
-  // Rời trang tìm kiếm thì xoá ô; quay lại thì hiện từ khoá trên URL
-  useEffect(() => { setQ(urlQ); }, [urlQ]);
+  // Rời trang tìm kiếm thì xoá ô; quay lại thì hiện từ khoá trên URL.
+  // Đang gõ (ô đang được chọn) thì không ghi đè, tránh mất chữ khi gõ nhanh.
+  useEffect(() => {
+    if (document.activeElement !== inputRef.current) setQ(urlQ);
+  }, [urlQ, inputRef]);
 
   const go = (value, replace) => {
     const term = value.trim();
@@ -31,8 +35,8 @@ function SearchBox({ inputRef }) {
     <form className="search" role="search" onSubmit={(e) => { e.preventDefault(); clearTimeout(timer.current); go(q, false); }}>
       <Icon name="search" size={17} />
       <input
-        ref={inputRef} id="q" type="search" value={q} aria-label="Tìm sản phẩm"
-        placeholder="Bạn cần tìm gì? iPhone Duo, S26 Ultra, sạc nhanh…"
+        ref={inputRef} id="q" type="search" value={q} aria-label="Tìm sản phẩm" autoComplete="off"
+        placeholder="Bạn cần tìm gì? iPhone 18, MacBook Air M5, Legion 5…"
         onChange={(e) => {
           const v = e.target.value;
           setQ(v);
@@ -62,6 +66,7 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname, search } = useLocation();
   const searchRef = useRef();
+  const isAdmin = Boolean(getToken());
 
   // Sang trang khác thì cuộn lên đầu (đổi bộ lọc trên cùng trang thì giữ nguyên vị trí)
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
@@ -96,6 +101,12 @@ export default function Layout() {
           </button>
           <SearchBox inputRef={searchRef} />
           <div className="hotline">Gọi mua hàng<b className="num">1900 0000</b></div>
+          {/* Nút này chỉ hiện trên máy đã đăng nhập admin; khách thường không thấy */}
+          {isAdmin && (
+            <Link className="hbtn admin-link" to="/admin" aria-label="Về trang quản trị">
+              <Icon name="grid" size={18} /><span className="lbl">Quản trị</span>
+            </Link>
+          )}
           <button className="hbtn cart-btn" onClick={() => cart.setOpen(true)} aria-label="Mở giỏ hàng">
             <Icon name="cart" size={18} /><span className="lbl">Giỏ hàng</span>
             <span className="badge num">{cart.count}</span>
@@ -109,7 +120,7 @@ export default function Layout() {
         <div className="wrap">
           <div>
             <Logo />
-            <p style={{ marginTop: 12, maxWidth: '34ch' }}>Công nghệ đến gần bạn hơn. Điện thoại và phụ kiện chính hãng, giá tốt mỗi ngày.</p>
+            <p style={{ marginTop: 12, maxWidth: '34ch' }}>Công nghệ đến gần bạn hơn. Điện thoại, laptop và phụ kiện chính hãng, giá tốt mỗi ngày.</p>
           </div>
           <div>
             <h5>Tổng đài miễn phí</h5>
@@ -125,6 +136,7 @@ export default function Layout() {
             <ul>
               <li><Link to="/danh-muc/dien-thoai?brand=apple">iPhone</Link></li>
               <li><Link to="/danh-muc/dien-thoai?brand=samsung">Samsung</Link></li>
+              <li><Link to="/danh-muc/laptop">Laptop</Link></li>
               <li><Link to="/danh-muc/phu-kien">Phụ kiện</Link></li>
             </ul>
           </div>

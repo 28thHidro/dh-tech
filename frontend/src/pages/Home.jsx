@@ -7,23 +7,47 @@ import ProductArt from '../components/ProductArt.jsx';
 import Commitments from '../components/Commitments.jsx';
 import { ErrorBox, SkeletonGrid } from '../components/States.jsx';
 import { useApi } from '../lib/api.js';
-import { vnd } from '../lib/format.js';
+import { brandLabel, vnd } from '../lib/format.js';
 
 // Nội dung banner do đội marketing soạn. Giá lấy từ API theo slug.
 const SLIDES = [
   { slug: 'iphone-duo', eyebrow: 'Mới · Có hàng từ 23/10', title: ['iPhone Duo', 'mở ra là màn hình lớn'], text: 'Chiếc iPhone gập đầu tiên. Đặt hàng hôm nay, giao nhanh trong 2 giờ.' },
+  { slug: 'macbook-air-13-m5', eyebrow: 'Mùa tựu trường', title: ['MacBook Air M5', 'mỏng nhẹ, pin cả ngày'], text: 'Giảm thêm cho học sinh, sinh viên. Trả góp 0% qua thẻ tín dụng.' },
+  { slug: 'galaxy-z-fold8-ultra', eyebrow: 'Galaxy Z Series', title: ['Galaxy Z Fold8 Ultra', 'màn hình gập cỡ lớn'], text: 'Giảm ngay 3 triệu, tặng bao da kèm bút.' },
   { slug: 'iphone-18-pro-max', eyebrow: 'iPhone 18 Series', title: ['iPhone 18 Pro Max', 'chip A20 Pro'], text: 'Camera 48MP Pro Fusion và pin xem video đến 43 giờ. Thu cũ trợ giá đến 3 triệu.' },
-  { slug: 'galaxy-s26-ultra', eyebrow: 'Galaxy S26 Series', title: ['Galaxy S26 Ultra', 'camera 200MP'], text: 'Giảm ngay 5 triệu, tặng kèm sạc nhanh 45W.' },
 ];
 
 const QUICK = [
   ['apple', 'iPhone', '/danh-muc/dien-thoai?brand=apple'],
   ['samsung', 'Samsung', '/danh-muc/dien-thoai?brand=samsung'],
+  ['phone', 'Xiaomi', '/danh-muc/dien-thoai?brand=xiaomi'],
+  ['laptop', 'MacBook', '/danh-muc/laptop?brand=apple'],
+  ['laptop', 'Laptop', '/danh-muc/laptop'],
+  ['headphones', 'Tai nghe, loa', '/danh-muc/tai-nghe'],
   ['plug', 'Sạc, cáp', '/danh-muc/sac-cap'],
-  ['case', 'Ốp lưng', '/danh-muc/op-lung'],
   ['battery', 'Pin dự phòng', '/danh-muc/pin'],
-  ['headphones', 'Tai nghe', '/danh-muc/tai-nghe'],
 ];
+
+// Một khối sản phẩm theo danh mục, có các nút lọc theo hãng (lấy từ chính dữ liệu)
+function CategorySection({ title, items, category, loading }) {
+  const [brand, setBrand] = useState('');
+  const list = items.filter((p) => !brand || p.brand_slug === brand).slice(0, 10);
+  const brands = [...new Map(items.filter((p) => p.brand_slug).map((p) => [p.brand_slug, brandLabel(p.brand_slug, p.brand, category)])).entries()];
+  const link = brand ? `/danh-muc/${category}?brand=${brand}` : `/danh-muc/${category}`;
+  return (
+    <section className="sec">
+      <div className="sec-head">
+        <h2>{title}</h2>
+        <div className="tabs" role="group" aria-label="Lọc theo hãng">
+          {brands.length > 1 && <button className="tab" aria-pressed={!brand} onClick={() => setBrand('')}>Tất cả</button>}
+          {brands.length > 1 && brands.map(([k, l]) => <button key={k} className="tab" aria-pressed={brand === k} onClick={() => setBrand(k)}>{l}</button>)}
+          <Link className="more" to={link}>Xem tất cả ›</Link>
+        </div>
+      </div>
+      {loading ? <SkeletonGrid /> : <div className="grid">{list.map((p) => <ProductCard key={p.slug} p={p} />)}</div>}
+    </section>
+  );
+}
 
 // Đếm ngược đến 23:59:59 Chủ nhật tuần này
 function useCountdown() {
@@ -64,7 +88,7 @@ function Banner({ products }) {
             <div className="from">Giá chỉ từ<b className="num">{vnd(s.p.min_price)}</b></div>
             <Link className="btn btn-primary" to={`/san-pham/${s.slug}`} tabIndex={i === cur ? 0 : -1}>Mua ngay</Link>
           </div>
-          <ProductArt product={s.p} className="slide-art" />
+          <ProductArt product={s.p} image={s.p.image} width={700} className="slide-art" />
         </div>
       ))}
       <div className="dots-nav">
@@ -78,15 +102,14 @@ function Banner({ products }) {
 
 export default function Home() {
   const { data, error, loading, reload } = useApi('/api/products');
-  const [brand, setBrand] = useState('all');
   const [h, m, s] = useCountdown();
 
   const items = data?.items ?? [];
   const hot = items.filter((p) => p.is_hot);
-  // Trang chủ chỉ hiện 1 hàng (5 máy), xem hết ở trang danh mục
-  const phones = items.filter((p) => p.category === 'dien-thoai' && (brand === 'all' || p.brand_slug === brand)).slice(0, 5);
-  const phonesLink = brand === 'all' ? '/danh-muc/dien-thoai' : `/danh-muc/dien-thoai?brand=${brand}`;
-  const accessories = items.filter((p) => p.parent_category === 'phu-kien').slice(0, 5);
+  const phones = items.filter((p) => p.category === 'dien-thoai');
+  const laptops = items.filter((p) => p.category === 'laptop');
+  const accessories = items.filter((p) => p.parent_category === 'phu-kien');
+  const waiting = loading && !data;
 
   return (
     <div className="wrap">
@@ -95,8 +118,8 @@ export default function Home() {
         <Banner products={items} />
         <div className="side-promos">
           <Link className="sp dark" to="/danh-muc/dien-thoai?brand=apple"><span className="k">Thu cũ đổi mới</span><h3>Lên đời iPhone 18 Pro</h3><p>Trợ giá đến 3 triệu khi đổi máy cũ.</p></Link>
-          <Link className="sp" to="/danh-muc/phu-kien"><span className="k">Phụ kiện</span><h3>Mua kèm giảm đến 30%</h3><p>Sạc GaN, cáp bện dù, ốp MagSafe.</p></Link>
-          <Link className="sp" to="/danh-muc/dien-thoai?brand=samsung"><span className="k">Samsung</span><h3>Galaxy S26 giảm 3 triệu</h3><p>Tặng ốp lưng và kính cường lực.</p></Link>
+          <Link className="sp" to="/danh-muc/laptop"><span className="k">Laptop</span><h3>Laptop gaming giảm đến 6 triệu</h3><p>Lenovo Legion, Acer Nitro, ASUS TUF.</p></Link>
+          <Link className="sp" to="/danh-muc/phu-kien"><span className="k">Phụ kiện</span><h3>Mua kèm giảm đến 30%</h3><p>Sạc GaN, pin dự phòng, tai nghe, balo laptop.</p></Link>
         </div>
       </div>
 
@@ -113,27 +136,17 @@ export default function Home() {
           <h2><span className="bolt"><Icon name="bolt" size={18} /></span>Hot sale cuối tuần</h2>
           <div className="timer" aria-label="Thời gian còn lại">Kết thúc sau <b className="num">{h}</b>:<b className="num">{m}</b>:<b className="num">{s}</b></div>
         </div>
-        {loading && !data ? <SkeletonGrid count={4} /> : (
+        {waiting ? <SkeletonGrid count={4} /> : (
           <div className="rail">{hot.map((p) => <ProductCard key={p.slug} p={p} />)}</div>
         )}
       </section>
 
-      <section className="sec">
-        <div className="sec-head">
-          <h2>Điện thoại nổi bật</h2>
-          <div className="tabs" role="group" aria-label="Lọc theo hãng">
-            {[['all', 'Tất cả'], ['apple', 'iPhone'], ['samsung', 'Samsung']].map(([k, l]) => (
-              <button key={k} className="tab" aria-pressed={brand === k} onClick={() => setBrand(k)}>{l}</button>
-            ))}
-            <Link className="more" to={phonesLink}>Xem tất cả ›</Link>
-          </div>
-        </div>
-        {loading && !data ? <SkeletonGrid /> : <div className="grid">{phones.map((p) => <ProductCard key={p.slug} p={p} />)}</div>}
-      </section>
+      <CategorySection title="Điện thoại nổi bật" items={phones} category="dien-thoai" loading={waiting} />
+      <CategorySection title="Laptop" items={laptops} category="laptop" loading={waiting} />
 
       <section className="sec">
         <div className="sec-head"><h2>Phụ kiện công nghệ</h2><Link className="more" to="/danh-muc/phu-kien">Xem tất cả ›</Link></div>
-        {loading && !data ? <SkeletonGrid /> : <div className="grid">{accessories.map((p) => <ProductCard key={p.slug} p={p} />)}</div>}
+        {waiting ? <SkeletonGrid /> : <div className="grid">{accessories.slice(0, 10).map((p) => <ProductCard key={p.slug} p={p} />)}</div>}
       </section>
 
       <section className="sec"><Commitments /></section>

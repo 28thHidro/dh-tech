@@ -4,13 +4,15 @@ import ProductCard from '../components/ProductCard.jsx';
 import Commitments from '../components/Commitments.jsx';
 import { ErrorBox, SkeletonGrid } from '../components/States.jsx';
 import { useApi } from '../lib/api.js';
+import { brandLabel } from '../lib/format.js';
 
-const BRANDS = [['', 'Tất cả'], ['apple', 'iPhone'], ['samsung', 'Samsung']];
-const PRICES = [['', 'Tất cả'], ['u1', 'Dưới 1 triệu'], ['1-30', '1 – 30 triệu'], ['o30', 'Trên 30 triệu']];
+const PRICES = [['', 'Tất cả'], ['u1', 'Dưới 1 triệu'], ['1-10', '1 – 10 triệu'], ['10-20', '10 – 20 triệu'], ['20-40', '20 – 40 triệu'], ['o40', 'Trên 40 triệu']];
 const PRICE_TEST = {
   u1: (p) => p.min_price < 1e6,
-  '1-30': (p) => p.min_price >= 1e6 && p.min_price <= 3e7,
-  o30: (p) => p.min_price > 3e7,
+  '1-10': (p) => p.min_price >= 1e6 && p.min_price < 1e7,
+  '10-20': (p) => p.min_price >= 1e7 && p.min_price < 2e7,
+  '20-40': (p) => p.min_price >= 2e7 && p.min_price <= 4e7,
+  o40: (p) => p.min_price > 4e7,
 };
 
 export default function ProductList({ mode }) {
@@ -33,31 +35,39 @@ export default function ProductList({ mode }) {
   const allCats = (cats ?? []).flatMap((c) => [c, ...c.children]);
   const cat = allCats.find((c) => c.slug === slug);
 
+  // Lấy cả danh mục một lần; lọc theo hãng và giá ngay trên trình duyệt cho nhanh
   const query = new URLSearchParams({ sort });
   if (mode === 'search') query.set('q', q); else query.set('category', slug);
-  if (brand) query.set('brand', brand);
   const { data, error, loading, reload } = useApi(mode === 'search' && !q.trim() ? null : `/api/products?${query}`);
 
-  const items = (data?.items ?? []).filter((p) => !price || PRICE_TEST[price](p));
-  const brandName = BRANDS.find(([k]) => k === brand)?.[1];
+  const all = data?.items ?? [];
+  // Danh sách hãng lấy từ chính các sản phẩm đang có, nên thêm hãng mới là tự hiện
+  const brands = [...new Map(all.filter((p) => p.brand_slug).map((p) => [p.brand_slug, brandLabel(p.brand_slug, p.brand, slug)])).entries()];
+  const items = all.filter((p) => (!brand || p.brand_slug === brand) && (!price || PRICE_TEST[price](p)));
+
+  const brandName = brands.find(([k]) => k === brand)?.[1];
   const title = mode === 'search'
     ? `Kết quả cho “${q}”`
-    : brand ? brandName : cat?.name ?? 'Danh mục';
-  const isPhones = slug === 'dien-thoai';
+    : brand && brandName ? (slug === 'dien-thoai' && brand !== 'apple' ? `Điện thoại ${brandName}` : slug === 'laptop' && brand !== 'apple' ? `Laptop ${brandName}` : brandName)
+    : cat?.name ?? 'Danh mục';
 
   return (
     <div className="wrap">
       <div className="page-head">
-        <div className="crumbs"><Link to="/">Trang chủ</Link> › {title}</div>
+        <div className="crumbs">
+          <Link to="/">Trang chủ</Link>
+          {brand && cat ? <> › <Link to={`/danh-muc/${slug}`}>{cat.name}</Link></> : null} › {title}
+        </div>
         <h1>{title}</h1>
         {data && <p className="muted">{items.length} sản phẩm</p>}
       </div>
 
       <div className="filters">
-        {isPhones && (
+        {brands.length > 1 && (
           <div className="fgroup">
             <span className="lbl">Hãng</span>
-            {BRANDS.map(([k, l]) => <button key={l} className="tab" aria-pressed={brand === k} onClick={() => setParam('brand', k)}>{l}</button>)}
+            <button className="tab" aria-pressed={!brand} onClick={() => setParam('brand', '')}>Tất cả</button>
+            {brands.map(([k, l]) => <button key={k} className="tab" aria-pressed={brand === k} onClick={() => setParam('brand', k)}>{l}</button>)}
           </div>
         )}
         <div className="fgroup">
@@ -75,7 +85,7 @@ export default function ProductList({ mode }) {
       {error ? <ErrorBox error={error} onRetry={reload} />
         : loading ? <SkeletonGrid />
         : items.length ? <div className="grid">{items.map((p) => <ProductCard key={p.slug} p={p} />)}</div>
-        : <div className="empty">Chưa có sản phẩm phù hợp. Thử bỏ bớt bộ lọc, hoặc tìm “Duo”, “S26”, “sạc”.</div>}
+        : <div className="empty">Chưa có sản phẩm phù hợp. Thử bỏ bớt bộ lọc, hoặc tìm “MacBook”, “S26”, “sạc”.</div>}
 
       <section className="sec"><Commitments /></section>
     </div>

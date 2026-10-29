@@ -2,8 +2,15 @@ import { Link } from 'react-router';
 import Icon from './Icon.jsx';
 import { useApi } from '../lib/api.js';
 
-// Icon cho từng danh mục con (theo slug trong database)
-const SUB_ICON = { 'sac-cap': 'plug', 'op-lung': 'case', kinh: 'shield', pin: 'battery', 'tai-nghe': 'headphones' };
+// Hãng hiển thị trong menu. Thêm hãng mới: thêm một dòng ở đây (slug khớp bảng brands).
+const PHONE_BRANDS = [['apple', 'iPhone'], ['samsung', 'Samsung'], ['xiaomi', 'Xiaomi'], ['oppo', 'OPPO'], ['vivo', 'vivo']];
+const LAPTOP_BRANDS = [['apple', 'MacBook'], ['lenovo', 'Lenovo'], ['asus', 'ASUS'], ['acer', 'Acer']];
+
+// Icon cho từng danh mục con phụ kiện (theo slug trong database)
+const SUB_ICON = {
+  'sac-cap': 'plug', 'op-lung': 'case', kinh: 'shield', pin: 'battery', 'tai-nghe': 'headphones',
+  loa: 'headphones', 'chuot-ban-phim': 'grid', 'balo-tui': 'case', 'hub-gia-do': 'plug',
+};
 
 export default function CategoryMenu({ onNavigate, className = 'catmenu' }) {
   const { data } = useApi('/api/categories');
@@ -12,9 +19,22 @@ export default function CategoryMenu({ onNavigate, className = 'catmenu' }) {
   return (
     <nav className={className} aria-label="Danh mục sản phẩm">
       <div className="grp">Điện thoại</div>
-      <Link to="/danh-muc/dien-thoai?brand=apple" onClick={onNavigate}><Icon name="apple" size={18} />iPhone<span className="arrow">›</span></Link>
-      <Link to="/danh-muc/dien-thoai?brand=samsung" onClick={onNavigate}><Icon name="samsung" size={18} />Samsung<span className="arrow">›</span></Link>
+      <div className="chips">
+        {PHONE_BRANDS.map(([slug, label]) => (
+          <Link key={slug} to={`/danh-muc/dien-thoai?brand=${slug}`} onClick={onNavigate}>{label}</Link>
+        ))}
+      </div>
       <Link to="/danh-muc/dien-thoai" onClick={onNavigate}><Icon name="phone" size={18} />Tất cả điện thoại<span className="arrow">›</span></Link>
+
+      <div className="sep" />
+      <div className="grp">Laptop</div>
+      <div className="chips">
+        {LAPTOP_BRANDS.map(([slug, label]) => (
+          <Link key={slug} to={`/danh-muc/laptop?brand=${slug}`} onClick={onNavigate}>{label}</Link>
+        ))}
+      </div>
+      <Link to="/danh-muc/laptop" onClick={onNavigate}><Icon name="laptop" size={18} />Tất cả laptop<span className="arrow">›</span></Link>
+
       <div className="sep" />
       <div className="grp">Phụ kiện</div>
       {(accessories?.children ?? []).map((c) => (
