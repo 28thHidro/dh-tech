@@ -9,7 +9,7 @@ import { useCart } from '../lib/cart.jsx';
 import { getToken } from '../lib/admin.js';
 
 function Logo() {
-  return <img className="logo" src={logo} alt="DH tech" width="600" height="138" />;
+  return <img className="logo" src={logo} alt="DH tech" width="600" height="135" />;
 }
 
 function SearchBox({ inputRef }) {

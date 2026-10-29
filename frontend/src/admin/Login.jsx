@@ -37,8 +37,8 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <img className="login-logo" src={logo} alt="DH tech" width="600" height="135" />
       <form className="login-card" onSubmit={submit}>
-        <div className="login-head"><img src={logo} alt="DH tech" width="600" height="138" /></div>
         <h1>Đăng nhập quản trị</h1>
         <label htmlFor="username">Tên đăng nhập</label>
         <input id="username" name="username" required autoComplete="username" autoFocus />

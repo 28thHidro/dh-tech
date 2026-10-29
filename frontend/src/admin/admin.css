@@ -140,15 +140,14 @@
 .order footer select { background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; }
 .order footer .muted { margin: 0; }
 
-/* Đăng nhập */
-.login-page { min-height: 100vh; display: grid; place-items: center; background: var(--ink); padding: 24px max(16px, env(safe-area-inset-left, 0px)); }
-.login-card { width: min(380px, 100%); background: var(--surface); border-radius: 16px; overflow: hidden; display: grid; gap: 8px; padding: 0 22px 22px; }
-.login-head { background: var(--ink); margin: 0 -22px 8px; padding: 22px; border-bottom: 1px solid var(--ink-line); }
-.login-head img { height: 34px; width: auto; display: block; }
-.login-card h1 { font-family: var(--f-display); font-size: 22px; margin: 4px 0 6px; }
-.login-card label { font-size: 13px; font-weight: 600; margin-top: 4px; }
-.login-card input { background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; color: var(--fg); font: inherit; }
-.login-card input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--tint); }
-.login-card .btn { margin-top: 8px; }
-.login-card .back { text-align: center; font-size: 13px; color: var(--muted); margin-top: 4px; }
-.login-card .back:hover { color: var(--price); }
+/* Đăng nhập: logo nằm trên, thẻ đăng nhập căn giữa màn hình */
+.login-page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; background: var(--ink); padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.login-logo { height: 44px; width: auto; display: block; }
+.login-card { width: min(400px, 100%); background: var(--ink-2); border: 1px solid var(--ink-line); border-radius: 14px; display: grid; gap: 8px; padding: 26px 24px 22px; color: var(--on-ink); }
+.login-card h1 { font-family: var(--f-display); font-size: 22px; margin: 0 0 8px; color: var(--on-ink); }
+.login-card label { font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--on-ink); }
+.login-card input { background: var(--ink); border: 1px solid var(--ink-line); border-radius: 9px; padding: 11px 12px; color: var(--on-ink); font: inherit; }
+.login-card input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(242, 140, 40, .2); }
+.login-card .btn { margin-top: 10px; }
+.login-card .back { text-align: center; font-size: 13px; color: var(--on-ink-muted); margin-top: 6px; }
+.login-card .back:hover { color: var(--accent); }

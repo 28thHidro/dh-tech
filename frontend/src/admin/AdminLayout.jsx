@@ -35,7 +35,7 @@ export default function AdminLayout() {
   return (
     <div className="admin">
       <aside className="admin-side">
-        <Link to="/admin" className="admin-brand"><img src={logo} alt="DH tech" width="600" height="138" /><span>Quản trị</span></Link>
+        <Link to="/admin" className="admin-brand"><img src={logo} alt="DH tech" width="600" height="135" /><span>Quản trị</span></Link>
         <nav>
           <NavLink to="/admin" end><Icon name="phone" size={18} />Sản phẩm</NavLink>
           <NavLink to="/admin/don-hang"><Icon name="cart" size={18} />Đơn hàng</NavLink>
