@@ -10,8 +10,9 @@ export default function ProductArt({ product, color, image, width = 600, classNa
   );
 
   if (image) {
+    // Lớp "photo": vùng ảnh luôn nền trắng (kể cả chế độ tối), để ảnh nền trắng hoà vào khung
     return (
-      <div className={className}>
+      <div className={`${className} photo`}>
         <img src={cdn(image, width)} alt={product.name} loading="lazy" decoding="async" />
       </div>
     );

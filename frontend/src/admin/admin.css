@@ -47,6 +47,7 @@
 .prod-cell small { color: var(--muted); font-size: 12px; }
 .prod-cell:hover b { color: var(--price); }
 .mini-art { width: 48px; height: 48px; flex-shrink: 0; display: grid; place-items: center; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+.mini-art.photo { background: #fff; }
 .mini-art svg, .mini-art img { max-height: 42px; max-width: 42px; width: auto; height: auto; object-fit: contain; }
 .empty-row { text-align: center; color: var(--muted); padding: 28px !important; }
 

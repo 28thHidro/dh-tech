@@ -293,6 +293,13 @@ header.top .wrap { display: flex; align-items: center; gap: 14px; padding-block:
 .thumb-art img { height: 50px; width: 50px; object-fit: contain; }
 .slide-art img { height: 240px; width: auto; max-width: 100%; object-fit: contain; }
 
+/* Ảnh thật (thường nền trắng): cho cả vùng ảnh nền trắng để không lộ ô vuông trắng giữa khung tối */
+.photo { background: #fff; border-radius: 10px; }
+.card .art.photo { border-radius: 8px; }
+.thumbs button:has(.photo) { background: #fff; }
+.item-art.photo { border-radius: 8px; width: 60px; height: 60px; }
+.slide-art.photo { justify-self: center; padding: 16px; border-radius: 14px; }
+
 /* Giỏ hàng đang mở thì thông báo hiện ở trên, không che ô nhập */
 .toast.top { bottom: auto; top: calc(16px + env(safe-area-inset-top, 0px)); }
 
