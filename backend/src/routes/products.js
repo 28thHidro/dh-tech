@@ -81,7 +81,8 @@ router.get('/:slug', async (req, res) => {
              FROM product_colors co WHERE co.product_id = p.id) AS colors,
             (SELECT json_agg(json_build_object(
                       'variant_id', s.variant_id, 'color_id', s.color_id,
-                      'sku_code', s.sku_code, 'stock', s.stock))
+                      'sku_code', s.sku_code, 'stock', s.stock)
+                    ORDER BY s.variant_id, s.color_id)
              FROM product_skus s WHERE s.product_id = p.id) AS skus,
             (SELECT COALESCE(json_agg(json_build_object('label', sp.label, 'value', sp.value)
                     ORDER BY sp.sort_order), '[]'::json)
