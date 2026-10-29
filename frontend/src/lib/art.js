@@ -10,7 +10,12 @@ export function artKind(p) {
   if (cat === 'op-lung') return 'case';
   if (cat === 'kinh') return 'glass';
   if (cat === 'pin') return 'powerbank';
-  if (cat === 'tai-nghe' || cat === 'loa') return 'earbuds';
+  if (cat === 'dong-ho') return 'watch';
+  if (cat === 'loa') return 'speaker';
+  if (cat === 'tai-nghe') return /wh-|xm\d|max/.test(p.slug || '') ? 'headphones' : 'earbuds';
+  if (cat === 'ban-phim-co') return 'keyboard';
+  if (cat === 'chuot-gaming') return 'mouse';
+  if (cat === 'tay-cam') return 'gamepad';
   if (['chuot-ban-phim', 'balo-tui', 'hub-gia-do'].includes(cat)) return 'box';
   if (p.brand_slug === 'apple') return 'apple';
   if (p.slug?.includes('ultra')) return 'ultra';
@@ -55,6 +60,21 @@ export function artSvg(kind, color = '#1C1D20', isApple = false) {
       return `${open('0 0 200 200')}<rect x="40" y="90" width="120" height="86" rx="34" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/><line x1="44" y1="120" x2="156" y2="120" stroke="${edge}"/><circle cx="100" cy="150" r="3.5" fill="#F28C28"/><g fill="url(#g${u})" stroke="${edge}" stroke-width="2"><ellipse cx="72" cy="58" rx="20" ry="22"/><rect x="66" y="66" width="12" height="40" rx="6"/><ellipse cx="128" cy="58" rx="20" ry="22"/><rect x="122" y="66" width="12" height="40" rx="6"/></g></svg>`;
     case 'laptop': return `${open('0 0 300 210')}<rect x="40" y="20" width="220" height="146" rx="10" fill="${shade(c, -6)}" stroke="${edge}" stroke-width="2"/>${screen(50, 30, 200, 126, 4)}<path d="M50 140 C 110 130, 170 100, 250 50" stroke="#F28C28" stroke-width="2" fill="none" opacity=".5"/><path d="M14 172 H286 L272 190 H28 Z" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/><rect x="128" y="172" width="44" height="5" rx="2.5" fill="${shade(c, -30)}"/></svg>`;
     case 'box': return `${open('0 0 200 200')}<rect x="40" y="50" width="120" height="110" rx="16" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/><rect x="60" y="70" width="80" height="10" rx="5" fill="${shade(c, -25)}"/><rect x="60" y="92" width="56" height="10" rx="5" fill="${shade(c, -25)}"/><circle cx="130" cy="135" r="8" fill="#F28C28"/></svg>`;
+    case 'watch':
+      return `${open('0 0 200 230')}<rect x="66" y="6" width="68" height="64" rx="18" fill="${shade(c, -10)}" stroke="${edge}" stroke-width="2"/><rect x="66" y="160" width="68" height="64" rx="18" fill="${shade(c, -10)}" stroke="${edge}" stroke-width="2"/><rect x="44" y="48" width="112" height="134" rx="34" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/>${screen(54, 58, 92, 114, 26)}<rect x="156" y="88" width="9" height="26" rx="4" fill="${edge}"/><text x="100" y="112" text-anchor="middle" font-family="system-ui" font-size="26" font-weight="700" fill="#fff">10:09</text><path d="M72 140 a28 28 0 0 1 56 0" stroke="#F28C28" stroke-width="5" fill="none" stroke-linecap="round"/></svg>`;
+    case 'headphones':
+      return `${open('0 0 200 200')}<path d="M44 120 V96 a56 56 0 0 1 112 0 V120" stroke="url(#g${u})" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M44 120 V96 a56 56 0 0 1 112 0 V120" stroke="${edge}" stroke-width="1.5" fill="none"/><rect x="24" y="106" width="44" height="72" rx="20" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/><rect x="132" y="106" width="44" height="72" rx="20" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/><circle cx="154" cy="160" r="3.5" fill="#F28C28"/></svg>`;
+    case 'speaker':
+      return `${open('0 0 240 200')}<rect x="20" y="62" width="200" height="86" rx="43" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/><circle cx="62" cy="105" r="26" fill="${shade(c, -24)}" stroke="${edge}"/><circle cx="178" cy="105" r="26" fill="${shade(c, -24)}" stroke="${edge}"/><circle cx="62" cy="105" r="10" fill="${lens}"/><circle cx="178" cy="105" r="10" fill="${lens}"/><rect x="96" y="96" width="48" height="18" rx="9" fill="#fff" opacity=".9"/><text x="120" y="110" text-anchor="middle" font-family="system-ui" font-size="12" font-weight="800" fill="#141414">SOUND</text></svg>`;
+    case 'keyboard': {
+      const keys = [];
+      for (let r = 0; r < 5; r++) for (let k = 0; k < 13; k++) keys.push(`<rect x="${28 + k * 18}" y="${66 + r * 18}" width="15" height="15" rx="3" fill="${(r + k) % 7 === 0 ? '#F28C28' : shade(c, 26)}"/>`);
+      return `${open('0 0 300 200')}<rect x="16" y="54" width="268" height="112" rx="14" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/>${keys.join('')}<circle cx="268" cy="72" r="9" fill="${shade(c, -30)}" stroke="${edge}"/></svg>`;
+    }
+    case 'mouse':
+      return `${open('0 0 200 230')}<path d="M100 16 C 52 16, 46 70, 46 120 C 46 182, 72 214, 100 214 C 128 214, 154 182, 154 120 C 154 70, 148 16, 100 16 Z" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/><path d="M100 16 V92 M46 92 H154" stroke="${edge}" stroke-width="2"/><rect x="94" y="40" width="12" height="28" rx="6" fill="#F28C28"/></svg>`;
+    case 'gamepad':
+      return `${open('0 0 260 200')}<path d="M70 50 H190 C 230 50, 248 120, 244 156 C 240 186, 210 186, 196 162 L180 136 H80 L64 162 C 50 186, 20 186, 16 156 C 12 120, 30 50, 70 50 Z" fill="url(#g${u})" stroke="${edge}" stroke-width="2"/><path d="M58 96 h28 M72 82 v28" stroke="${lens}" stroke-width="7" stroke-linecap="round"/>${[[190, 84], [206, 100], [174, 100], [190, 116]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6" fill="${lens}"/>`).join('')}<circle cx="104" cy="126" r="14" fill="${lens}"/><circle cx="156" cy="126" r="14" fill="${lens}"/><rect x="110" y="62" width="40" height="22" rx="8" fill="${shade(c, -16)}" stroke="${edge}"/><path d="M96 66 l-10 0 M174 66 l-10 0" stroke="#4C7DFF" stroke-width="3" stroke-linecap="round"/></svg>`;
     default:
       return '';
   }

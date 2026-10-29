@@ -9,6 +9,7 @@ import Commitments from '../components/Commitments.jsx';
 import Mascot from '../components/Mascot.jsx';
 import Storefront from '../components/Storefront.jsx';
 import { ErrorBox, SkeletonGrid } from '../components/States.jsx';
+import { useReveal } from '../lib/reveal.js';
 import { cdn, useApi } from '../lib/api.js';
 import { brandLabel, percentOff, vnd } from '../lib/format.js';
 import { HERO, NEW_ARRIVALS, SHOWCASE, SLIDES, STORE, STRIP, VIDEOS } from '../data/home.js';
@@ -19,7 +20,9 @@ const QUICK = [
   ['phone', 'Xiaomi', '/danh-muc/dien-thoai?brand=xiaomi'],
   ['laptop', 'MacBook', '/danh-muc/laptop?brand=apple'],
   ['laptop', 'Laptop', '/danh-muc/laptop'],
-  ['headphones', 'Tai nghe, loa', '/danh-muc/tai-nghe'],
+  ['watch', 'Apple Watch', '/danh-muc/dong-ho?brand=apple'],
+  ['headphones', 'Tai nghe, loa', '/danh-muc/am-thanh'],
+  ['gamepad', 'Gaming gear', '/danh-muc/gaming'],
   ['plug', 'Sạc, cáp', '/danh-muc/sac-cap'],
   ['battery', 'Pin dự phòng', '/danh-muc/pin'],
 ];
@@ -407,29 +410,14 @@ function Spotlight({ title, items, category, loading, tone }) {
 }
 
 // Các khối có lớp "reveal" hiện dần lên khi cuộn tới
-function useReveal(deps) {
-  useEffect(() => {
-    const els = [...document.querySelectorAll('.reveal:not(.in)')];
-    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      els.forEach((el) => el.classList.add('in'));
-      return;
-    }
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-    }, { rootMargin: '0px 0px -8% 0px' });
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-}
-
 export default function Home() {
   const { data, error, loading, reload } = useApi('/api/products');
   const items = data?.items ?? [];
   const hot = items.filter((p) => p.is_hot);
   const phones = items.filter((p) => p.category === 'dien-thoai');
   const laptops = items.filter((p) => p.category === 'laptop');
-  const accessories = items.filter((p) => p.parent_category === 'phu-kien');
+  const ACC_ROOTS = ['dong-ho', 'am-thanh', 'gaming', 'phu-kien'];
+  const accessories = items.filter((p) => ACC_ROOTS.includes(p.parent_category ?? p.category));
   const waiting = loading && !data;
   useReveal([waiting]);
 
@@ -461,7 +449,7 @@ export default function Home() {
         <Spotlight title="Laptop" items={laptops} category="laptop" loading={waiting} tone="cool" />
 
         <section className="sec reveal">
-          <div className="sec-head"><h2>Phụ kiện công nghệ</h2><Link className="more" to="/danh-muc/phu-kien">Xem tất cả ›</Link></div>
+          <div className="sec-head"><h2>Đồng hồ, âm thanh và phụ kiện</h2><Link className="more" to="/danh-muc/phu-kien">Xem tất cả ›</Link></div>
           {waiting ? <SkeletonGrid /> : <div className="rail">{accessories.slice(0, 12).map((p) => <ProductCard key={p.slug} p={p} />)}</div>}
         </section>
 

@@ -9,7 +9,7 @@ let keySeq = 0;
 const k = () => `k${++keySeq}`; // khoá tạm cho React phân biệt các dòng, không gửi lên server
 
 const EMPTY = {
-  name: '', slug: '', category_id: '', brand_id: '', short_desc: '', discount_amount: 0, gift_text: '',
+  name: '', slug: '', category_id: '', brand_id: '', short_desc: '', highlights: '', discount_amount: 0, gift_text: '',
   is_hot: false, is_active: true,
   variants: [{ _k: k(), name: '', list_price: '' }],
   colors: [{ _k: k(), name: '', hex: '#1C1D20' }],
@@ -20,7 +20,7 @@ function fromServer(p) {
   return {
     ...p,
     brand_id: p.brand_id ?? '',
-    short_desc: p.short_desc ?? '', gift_text: p.gift_text ?? '',
+    short_desc: p.short_desc ?? '', gift_text: p.gift_text ?? '', highlights: p.highlights ?? '',
     variants: p.variants.map((v) => ({ ...v, _k: k() })),
     colors: p.colors.map((c) => ({ ...c, _k: k() })),
     specs: p.specs.map((s) => ({ ...s, _k: k() })),
@@ -32,7 +32,7 @@ function fromServer(p) {
 function toServer(f) {
   const strip = ({ _k, ...rest }) => rest;
   return {
-    name: f.name, slug: f.slug, short_desc: f.short_desc, gift_text: f.gift_text,
+    name: f.name, slug: f.slug, short_desc: f.short_desc, gift_text: f.gift_text, highlights: f.highlights,
     category_id: Number(f.category_id), brand_id: f.brand_id ? Number(f.brand_id) : null,
     discount_amount: Number(f.discount_amount) || 0, is_hot: f.is_hot, is_active: f.is_active,
     variants: f.variants.map((v) => ({ ...strip(v), list_price: Number(v.list_price) })),
@@ -218,6 +218,10 @@ function ProductForm({ id }) {
           <label className="span2">Mô tả ngắn
             <input id="f-desc" value={form.short_desc} maxLength={300} onChange={(e) => set({ short_desc: e.target.value })} placeholder="Nhỏ gọn 6.3 inch, chip A20 Pro" />
           </label>
+          <label className="span2">Thông tin nổi bật
+            <textarea id="f-highlights" rows={4} maxLength={2000} value={form.highlights} onChange={(e) => set({ highlights: e.target.value })} placeholder={'Chip A20 Pro tiến trình 2nm\nPin xem video đến 43 giờ'} />
+            <small>Mỗi dòng một ý, hiện thành danh sách có dấu tích ở trang sản phẩm.</small>
+          </label>
           <label>Số tiền DH tech giảm (đ)
             <input id="f-discount" type="number" min="0" step="1000" value={form.discount_amount} onChange={(e) => set({ discount_amount: e.target.value })} />
             <small>Áp dụng cho mọi phiên bản.</small>
@@ -336,13 +340,17 @@ function ProductForm({ id }) {
 
       {/* 6. Thông số */}
       <section className="psec">
-        <div className="psec-head"><h2>Thông số kỹ thuật</h2><button type="button" className="btn btn-line sm" onClick={() => set({ specs: [...form.specs, { _k: k(), label: '', value: '' }] })}>+ Thêm dòng</button></div>
+        <div className="psec-head"><h2>Thông số kỹ thuật</h2><button type="button" className="btn btn-line sm" onClick={() => set({ specs: [...form.specs, { _k: k(), group_name: form.specs.at(-1)?.group_name ?? 'Thông số chung', label: '', value: '', is_key: false }] })}>+ Thêm dòng</button></div>
+        <p className="muted" style={{ margin: '0 0 10px' }}>Nhóm giúp chia thông số thành từng tab (Màn hình, Camera sau, Pin & Sạc...). Đánh dấu ★ cho tối đa 6 thông số quan trọng nhất, chúng hiện thành ô lớn ở đầu trang.</p>
+        <datalist id="spec-groups">{['Cấu hình & Bộ nhớ', 'Màn hình', 'Camera sau', 'Camera trước', 'Pin & Sạc', 'Thiết kế', 'Kết nối', 'Âm thanh', 'Tính năng', 'Thông số chung'].map((g) => <option key={g} value={g} />)}</datalist>
         <div className="rows">
           {form.specs.length === 0 && <p className="muted">Chưa có thông số. Ví dụ: Màn hình / 6.3 inch.</p>}
           {form.specs.map((s, i) => (
             <div className="row spec" key={s._k}>
+              <input aria-label="Nhóm" list="spec-groups" value={s.group_name ?? ''} onChange={(e) => setRow('specs', i, { group_name: e.target.value })} placeholder="Màn hình" />
               <input aria-label="Tên thông số" value={s.label} onChange={(e) => setRow('specs', i, { label: e.target.value })} placeholder="Màn hình" />
               <input aria-label="Giá trị" value={s.value} onChange={(e) => setRow('specs', i, { value: e.target.value })} placeholder="6.3 inch" />
+              <label className={`spec-key${s.is_key ? ' on' : ''}`} title="Thông số nổi bật"><input type="checkbox" checked={Boolean(s.is_key)} onChange={(e) => setRow('specs', i, { is_key: e.target.checked })} /><span aria-hidden="true">★</span><span className="sr-only">Nổi bật</span></label>
               <button type="button" className="icon-btn" onClick={() => set({ specs: form.specs.filter((_, j) => j !== i) })} aria-label="Xoá dòng">×</button>
             </div>
           ))}

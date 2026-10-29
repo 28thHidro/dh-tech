@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router';
 import logo from '../../assets/dh-tech-logo.png';
 import Icon from './Icon.jsx';
-import CategoryMenu from './CategoryMenu.jsx';
+import CategoryMenu, { MegaPanel } from './CategoryMenu.jsx';
 import CartDrawer from './CartDrawer.jsx';
 import MascotDock from './MascotDock.jsx';
 import { useCart } from '../lib/cart.jsx';
@@ -65,7 +65,13 @@ function MenuDrawer({ onClose }) {
 
 export default function Layout() {
   const cart = useCart();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // false | 'panel' (máy tính) | 'drawer' (điện thoại)
+  const hoverTimer = useRef();
+  const wide = () => matchMedia('(min-width: 861px)').matches;
+  const toggleMenu = () => setMenuOpen((m) => (m ? false : wide() ? 'panel' : 'drawer'));
+  // Rê chuột vào nút Danh mục thì mở bảng lớn, rời khỏi bảng một lúc thì đóng
+  const hoverIn = () => { clearTimeout(hoverTimer.current); if (wide()) hoverTimer.current = setTimeout(() => setMenuOpen('panel'), 140); };
+  const hoverOut = () => { clearTimeout(hoverTimer.current); hoverTimer.current = setTimeout(() => setMenuOpen((m) => (m === 'panel' ? false : m)), 260); };
   const { pathname, search } = useLocation();
   const searchRef = useRef();
   const isAdmin = Boolean(getToken());
@@ -99,8 +105,12 @@ export default function Layout() {
       <header className="top">
         <div className="wrap">
           <Link className="brand" to="/" aria-label="DH tech, về trang chủ"><Logo /></Link>
-          <button className="hbtn" onClick={() => setMenuOpen(true)} aria-label="Mở danh mục sản phẩm">
-            <Icon name="menu" size={18} /><span className="lbl">Danh mục</span>
+          <button
+            className={`hbtn menu-btn${menuOpen === 'panel' ? ' on' : ''}`} onClick={toggleMenu}
+            onMouseEnter={hoverIn} onMouseLeave={hoverOut}
+            aria-label="Mở danh mục sản phẩm" aria-expanded={Boolean(menuOpen)}
+          >
+            <Icon name={menuOpen === 'panel' ? 'x' : 'menu'} size={18} /><span className="lbl">Danh mục</span>
           </button>
           <SearchBox inputRef={searchRef} />
           <div className="hotline">Gọi mua hàng<b className="num">1900 0000</b></div>
@@ -124,6 +134,7 @@ export default function Layout() {
             <span className="badge num">{cart.count}</span>
           </button>
         </div>
+        {menuOpen === 'panel' && <MegaPanel onNavigate={() => setMenuOpen(false)} onMouseEnter={() => clearTimeout(hoverTimer.current)} onMouseLeave={hoverOut} />}
       </header>
 
       <main><Outlet /></main>
@@ -149,6 +160,9 @@ export default function Layout() {
               <li><Link to="/danh-muc/dien-thoai?brand=apple">iPhone</Link></li>
               <li><Link to="/danh-muc/dien-thoai?brand=samsung">Samsung</Link></li>
               <li><Link to="/danh-muc/laptop">Laptop</Link></li>
+              <li><Link to="/danh-muc/dong-ho">Đồng hồ thông minh</Link></li>
+              <li><Link to="/danh-muc/am-thanh">Tai nghe, loa</Link></li>
+              <li><Link to="/danh-muc/gaming">Gaming gear</Link></li>
               <li><Link to="/danh-muc/phu-kien">Phụ kiện</Link></li>
             </ul>
           </div>
@@ -158,14 +172,15 @@ export default function Layout() {
 
       <nav className="bottom-nav" aria-label="Điều hướng nhanh">
         <Link to="/"><Icon name="home" size={21} />Trang chủ</Link>
-        <button onClick={() => setMenuOpen(true)}><Icon name="grid" size={21} />Danh mục</button>
+        <button onClick={() => setMenuOpen('drawer')}><Icon name="grid" size={21} />Danh mục</button>
         <button onClick={() => { window.scrollTo(0, 0); searchRef.current?.focus(); }}><Icon name="search" size={21} />Tìm kiếm</button>
         <Link to={user ? '/tai-khoan' : '/dang-nhap'}><Icon name="user" size={21} />{user ? 'Tài khoản' : 'Đăng nhập'}</Link>
         <button onClick={() => cart.setOpen(true)}><Icon name="cart" size={21} />Giỏ hàng<span className="badge num">{cart.count}</span></button>
       </nav>
 
       <MascotDock />
-      {menuOpen && <MenuDrawer onClose={() => setMenuOpen(false)} />}
+      {menuOpen === 'panel' && <div className="mega-scrim" onClick={() => setMenuOpen(false)} />}
+      {menuOpen === 'drawer' && <MenuDrawer onClose={() => setMenuOpen(false)} />}
       {cart.open && <CartDrawer />}
       {cart.toast && <div className={`toast${cart.open ? ' top' : ''}`} role="status">{cart.toast}</div>}
     </>

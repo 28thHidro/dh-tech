@@ -68,9 +68,10 @@ router.get('/', async (req, res) => {
 // GET /api/products/iphone-18-pro
 router.get('/:slug', async (req, res) => {
   const { rows } = await pool.query(
-    `SELECT p.id, p.slug, p.name, p.short_desc,
+    `SELECT p.id, p.slug, p.name, p.short_desc, p.highlights,
             b.name AS brand, b.slug AS brand_slug,
             c.name AS category_name, c.slug AS category,
+            pc.name AS parent_name, pc.slug AS parent_category,
             p.discount_amount, p.gift_text, p.is_hot,
             (SELECT json_agg(json_build_object(
                       'id', v.id, 'name', v.name,
@@ -86,8 +87,8 @@ router.get('/:slug', async (req, res) => {
                       'sku_code', s.sku_code, 'stock', s.stock)
                     ORDER BY s.variant_id, s.color_id)
              FROM product_skus s WHERE s.product_id = p.id) AS skus,
-            (SELECT COALESCE(json_agg(json_build_object('label', sp.label, 'value', sp.value)
-                    ORDER BY sp.sort_order), '[]'::json)
+            (SELECT COALESCE(json_agg(json_build_object('group', sp.group_name, 'label', sp.label, 'value', sp.value, 'key', sp.is_key)
+                    ORDER BY sp.sort_order, sp.id), '[]'::json)
              FROM product_specs sp WHERE sp.product_id = p.id) AS specs,
             (SELECT COALESCE(json_agg(json_build_object('url', i.url, 'color_id', i.color_id)
                     ORDER BY i.sort_order), '[]'::json)
@@ -97,6 +98,7 @@ router.get('/:slug', async (req, res) => {
              FROM product_sections se WHERE se.product_id = p.id) AS sections
      FROM products p
      JOIN categories c  ON c.id = p.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
      LEFT JOIN brands b ON b.id = p.brand_id
      WHERE p.slug = $1 AND p.is_active`,
     [req.params.slug]

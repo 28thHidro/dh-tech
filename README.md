@@ -32,16 +32,17 @@ dien-thoai.png, admin.png, sau đó xoá hai dòng chú thích này để bảng
 
 **Khách hàng**
 - Trang chủ có video giới thiệu tự đổi theo thời gian, deal tuần dạng bento, linh vật Mèo Cam
-- Danh mục Điện thoại, Laptop, Phụ kiện (có danh mục con), lọc theo hãng và khoảng giá, sắp xếp theo giá
+- Menu danh mục lớn: Điện thoại, Laptop, Đồng hồ, Âm thanh, Gaming gear, Phụ kiện; mỗi mục có hãng, loại, mức giá và sản phẩm nổi bật, tự cập nhật theo hàng đang bán
+- Lọc theo hãng và khoảng giá, sắp xếp theo giá
 - Tìm kiếm gõ đến đâu tìm đến đó
-- Trang chi tiết: nhiều ảnh cho từng màu, chọn phiên bản và màu, bài mô tả, báo "Sắp về hàng" khi hết
+- Trang chi tiết: ảnh trượt và phóng to theo chuột cho từng màu, thông tin nổi bật, thông số nổi bật, bảng cấu hình chi tiết chia tab theo nhóm (Màn hình, Camera, Pin...), mục lục dính, hiệu ứng khi cuộn, báo "Sắp về hàng" khi hết
 - Tài khoản khách hàng: đăng ký, đăng nhập (kéo dây đèn để mở form), xem lại đơn và trạng thái giao
 - Giỏ hàng lưu trên trình duyệt; mua được cả khi chưa đăng nhập
 - Giao diện responsive cho điện thoại, có chế độ tối
 
 **Quản trị (`/admin`)**
 - Đăng nhập bằng JWT, khoá tạm 15 phút sau 5 lần nhập sai
-- Thêm, sửa, xoá sản phẩm: phiên bản, màu, tồn kho từng SKU, thông số, ảnh
+- Thêm, sửa, xoá sản phẩm: phiên bản, màu, tồn kho từng SKU, ảnh, thông số theo nhóm (đánh dấu ★ thông số nổi bật), thông tin nổi bật
 - Upload ảnh thẳng lên Cloudinary bằng chữ ký do server tạo
 - Soạn bài mô tả sản phẩm (tiêu đề, nội dung, ảnh)
 - Xem đơn hàng, đổi trạng thái; huỷ đơn thì hàng tự trả về kho; đánh dấu đơn của khách thành viên

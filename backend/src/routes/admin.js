@@ -62,7 +62,7 @@ router.get('/products/:id', async (req, res) => {
     pool.query('SELECT id, name, list_price FROM product_variants WHERE product_id = $1 ORDER BY sort_order, id', [id]),
     pool.query('SELECT id, name, hex FROM product_colors WHERE product_id = $1 ORDER BY sort_order, id', [id]),
     pool.query('SELECT variant_id, color_id, stock FROM product_skus WHERE product_id = $1', [id]),
-    pool.query('SELECT label, value FROM product_specs WHERE product_id = $1 ORDER BY sort_order, id', [id]),
+    pool.query('SELECT group_name, label, value, is_key FROM product_specs WHERE product_id = $1 ORDER BY sort_order, id', [id]),
     pool.query('SELECT url, color_id FROM product_images WHERE product_id = $1 ORDER BY sort_order, id', [id]),
     pool.query('SELECT title, body, image_url FROM product_sections WHERE product_id = $1 ORDER BY sort_order, id', [id]),
   ]);
@@ -100,6 +100,7 @@ function validate(body) {
     name: str(b.name, 200),
     slug: str(b.slug, 200).toLowerCase(),
     short_desc: str(b.short_desc, 300) || null,
+    highlights: str(b.highlights, 2000) || null,
     discount_amount: Number(b.discount_amount) || 0,
     gift_text: str(b.gift_text, 300) || null,
     is_hot: Boolean(b.is_hot),
@@ -145,8 +146,14 @@ function validate(body) {
   }));
 
   out.specs = out.specs
-    .map((s) => ({ label: str(s?.label, 100), value: str(s?.value, 300) }))
+    .map((s) => ({
+      group_name: str(s?.group_name, 60) || 'Thông số chung',
+      label: str(s?.label, 100),
+      value: str(s?.value, 300),
+      is_key: Boolean(s?.is_key),
+    }))
     .filter((s) => s.label && s.value);
+  if (out.specs.length > 80) errors.push('Tối đa 80 dòng thông số');
 
   out.images = out.images.map((img) => {
     const url = str(img?.url, 500);
@@ -171,17 +178,17 @@ function validate(body) {
 // Lưu sản phẩm (dùng chung cho thêm mới và sửa), chạy trong một transaction
 // ---------------------------------------------------------------------
 async function saveProduct(client, id, d) {
-  const fields = [d.category_id, d.brand_id, d.name, d.slug, d.short_desc, d.discount_amount, d.gift_text, d.is_hot, d.is_active];
+  const fields = [d.category_id, d.brand_id, d.name, d.slug, d.short_desc, d.discount_amount, d.gift_text, d.is_hot, d.is_active, d.highlights];
   if (id) {
     const r = await client.query(
       `UPDATE products SET category_id=$1, brand_id=$2, name=$3, slug=$4, short_desc=$5,
-              discount_amount=$6, gift_text=$7, is_hot=$8, is_active=$9, updated_at=now()
-       WHERE id=$10`, [...fields, id]);
+              discount_amount=$6, gift_text=$7, is_hot=$8, is_active=$9, highlights=$10, updated_at=now()
+       WHERE id=$11`, [...fields, id]);
     if (r.rowCount === 0) return null;
   } else {
     const r = await client.query(
-      `INSERT INTO products (category_id, brand_id, name, slug, short_desc, discount_amount, gift_text, is_hot, is_active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`, fields);
+      `INSERT INTO products (category_id, brand_id, name, slug, short_desc, discount_amount, gift_text, is_hot, is_active, highlights)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`, fields);
     id = r.rows[0].id;
   }
 
@@ -228,7 +235,9 @@ async function saveProduct(client, id, d) {
   // Thông số và ảnh không bị bảng nào khác trỏ tới, nên xoá hết rồi ghi lại cho gọn
   await client.query('DELETE FROM product_specs WHERE product_id=$1', [id]);
   for (const [i, s] of d.specs.entries()) {
-    await client.query('INSERT INTO product_specs (product_id, label, value, sort_order) VALUES ($1,$2,$3,$4)', [id, s.label, s.value, i + 1]);
+    await client.query(
+      'INSERT INTO product_specs (product_id, group_name, label, value, is_key, sort_order) VALUES ($1,$2,$3,$4,$5,$6)',
+      [id, s.group_name, s.label, s.value, s.is_key, i + 1]);
   }
   await client.query('DELETE FROM product_images WHERE product_id=$1', [id]);
   for (const [i, img] of d.images.entries()) {

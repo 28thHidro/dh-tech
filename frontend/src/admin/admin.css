@@ -88,7 +88,12 @@
 
 .rows { display: grid; gap: 8px; }
 .row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 36px; gap: 8px; align-items: center; }
-.row.spec { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 36px; }
+.row.spec { grid-template-columns: minmax(0, .9fr) minmax(0, 1fr) minmax(0, 1.6fr) 36px 36px; }
+.spec-key { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); color: var(--muted); cursor: pointer; font-size: 16px; }
+.spec-key input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.spec-key.on { background: var(--tint); border-color: var(--accent); color: var(--accent); }
+.spec-key:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .row.spec { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px 36px; } .row.spec > input:first-child { grid-column: 1 / -1; } }
 .row .hint { font-size: 12.5px; color: var(--muted); }
 .row .hint b { color: var(--price); }
 @media (max-width: 640px) { .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px; } .row .hint, .row > span:empty { display: none; } }

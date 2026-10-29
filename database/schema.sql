@@ -43,6 +43,7 @@ CREATE TABLE products (
   gift_text        VARCHAR(300),
   is_hot           BOOLEAN NOT NULL DEFAULT FALSE,            -- hiện ở mục Hot sale
   is_active        BOOLEAN NOT NULL DEFAULT TRUE,             -- ẩn sản phẩm mà không cần xoá
+  highlights       TEXT,                                      -- "Thông tin nổi bật", mỗi dòng một ý
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -107,8 +108,10 @@ CREATE TABLE product_images (
 CREATE TABLE product_specs (
   id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   product_id  INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  group_name  VARCHAR(60) NOT NULL DEFAULT 'Thông số chung',   -- nhóm: Màn hình, Camera sau, Pin & Sạc...
   label       VARCHAR(100) NOT NULL,
   value       VARCHAR(300) NOT NULL,
+  is_key      BOOLEAN NOT NULL DEFAULT FALSE,                 -- hiện ở ô "Thông số nổi bật"
   sort_order  INT NOT NULL DEFAULT 0
 );
 
