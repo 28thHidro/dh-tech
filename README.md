@@ -4,7 +4,7 @@
 
 Website bán điện thoại, laptop và phụ kiện, làm full-stack từ đầu: giao diện cho khách, trang quản trị cho admin, API và cơ sở dữ liệu riêng.
 
-🌐 **Website:** https://dh-tech-frontend.vercel.app
+🌐 **Website:** https://dhtech.id.vn (dự phòng: https://dh-tech-frontend.vercel.app)
 ⚙️ **API:** https://dh-tech-api.onrender.com/api/health
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
