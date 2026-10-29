@@ -6,7 +6,7 @@ import { ErrorBox, SkeletonGrid } from '../components/States.jsx';
 import { useApi } from '../lib/api.js';
 import { brandLabel } from '../lib/format.js';
 
-const PRICES = [['', 'Tất cả'], ['u1', 'Dưới 1 triệu'], ['1-10', '1 – 10 triệu'], ['10-20', '10 – 20 triệu'], ['20-40', '20 – 40 triệu'], ['o40', 'Trên 40 triệu']];
+const PRICES = [['', 'Tất cả'], ['u1', 'Dưới 1 triệu'], ['1-10', '1 đến 10 triệu'], ['10-20', '10 đến 20 triệu'], ['20-40', '20 đến 40 triệu'], ['o40', 'Trên 40 triệu']];
 const PRICE_TEST = {
   u1: (p) => p.min_price < 1e6,
   '1-10': (p) => p.min_price >= 1e6 && p.min_price < 1e7,

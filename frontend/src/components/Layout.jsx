@@ -125,7 +125,7 @@ export default function Layout() {
           </div>
           <div>
             <h5>Tổng đài miễn phí</h5>
-            <p>Gọi mua hàng (8:00 – 22:00)</p><p className="phone num">1900 0000</p>
+            <p>Gọi mua hàng (8:00 đến 22:00)</p><p className="phone num">1900 0000</p>
             <p style={{ marginTop: 8 }}>Khiếu nại, bảo hành</p><p className="phone num small">1900 0001</p>
           </div>
           <div>

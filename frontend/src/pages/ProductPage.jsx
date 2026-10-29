@@ -137,7 +137,7 @@ function ProductDetail({ p }) {
                 <ol>
                   {p.gift_text && <li>{p.gift_text}</li>}
                   <li>Giảm thêm 5% khi mua kèm phụ kiện</li>
-                  {p.category === 'dien-thoai' || p.category === 'laptop' ? <li>Trả góp 0% qua thẻ tín dụng, kỳ hạn 6 – 12 tháng</li> : <li>Miễn phí giao hàng cho đơn từ 300.000đ</li>}
+                  {p.category === 'dien-thoai' || p.category === 'laptop' ? <li>Trả góp 0% qua thẻ tín dụng, kỳ hạn 6 đến 12 tháng</li> : <li>Miễn phí giao hàng cho đơn từ 300.000đ</li>}
                 </ol>
               </div>
               <div className="buy-row">

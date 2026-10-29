@@ -35,6 +35,17 @@ function pickHero() {
     ?? HERO.find((h) => !h.from && !h.to) ?? HERO[0];
 }
 
+// Tắt phụ đề của video YouTube chạy nền: gửi lệnh "unloadModule captions" cho trình phát.
+// Gửi vài lần vì trình phát cần thời gian khởi động.
+function hideCaptions(e) {
+  const win = e.currentTarget.contentWindow;
+  const send = () => {
+    win?.postMessage(JSON.stringify({ event: 'command', func: 'unloadModule', args: ['captions'] }), '*');
+    win?.postMessage(JSON.stringify({ event: 'command', func: 'unloadModule', args: ['cc'] }), '*');
+  };
+  [500, 1500, 3000, 6000].forEach((t) => setTimeout(send, t));
+}
+
 function HeroVideo() {
   const h = useMemo(pickHero, []);
   const [muted, setMuted] = useState(true);
@@ -60,8 +71,9 @@ function HeroVideo() {
           // Video YouTube chạy nền: tắt tiếng, tự lặp, không có nút điều khiển
           <iframe
             className="hero-yt" tabIndex={-1} title={h.title}
-            src={`https://www.youtube-nocookie.com/embed/${h.youtube}?autoplay=1&mute=1&loop=1&playlist=${h.youtube}&controls=0&rel=0&playsinline=1&modestbranding=1&disablekb=1`}
+            src={`https://www.youtube-nocookie.com/embed/${h.youtube}?autoplay=1&mute=1&loop=1&playlist=${h.youtube}&controls=0&rel=0&playsinline=1&modestbranding=1&disablekb=1&cc_load_policy=0&iv_load_policy=3&enablejsapi=1`}
             allow="autoplay; encrypted-media"
+            onLoad={hideCaptions}
           />
         )}
       </div>

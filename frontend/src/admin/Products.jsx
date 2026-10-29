@@ -62,7 +62,7 @@ export default function Products() {
                 </td>
                 <td>{p.category_name}{p.brand ? <small className="sub">{p.brand}</small> : null}</td>
                 <td className="r num">{vnd(p.min_list_price)}</td>
-                <td className="r num">{p.discount_amount ? vnd(p.discount_amount) : '—'}</td>
+                <td className="r num">{p.discount_amount ? vnd(p.discount_amount) : '0đ'}</td>
                 <td className="r num">
                   {p.total_stock}
                   {p.out_of_stock_skus > 0 && <small className="sub bad">{p.out_of_stock_skus} loại hết</small>}

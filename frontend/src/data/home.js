@@ -101,7 +101,7 @@ export const VIDEOS = [
 export const STORE = {
   title: 'Ghé cửa hàng DH tech',
   text: 'Cầm thử máy thật, được Cam tư vấn tận tình. Thu cũ đổi mới, lên đời ngay tại chỗ.',
-  hours: '8:00 – 22:00 mỗi ngày',
+  hours: '8:00 đến 22:00 mỗi ngày',
   phone: '1900 0000',
 };
 
