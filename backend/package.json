@@ -1,0 +1,19 @@
+{
+  "name": "dh-tech-backend",
+  "version": "0.1.0",
+  "description": "API cho website DH tech",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --env-file=.env --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "pg": "^8.16.0"
+  }
+}
