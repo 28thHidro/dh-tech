@@ -1,17 +1,18 @@
 import { useMemo } from 'react';
 import { artKind, artSvg } from '../lib/art.js';
+import { cdn } from '../lib/api.js';
 
-// Ảnh sản phẩm: có ảnh thật (từ database) thì dùng, chưa có thì vẽ hình minh hoạ.
-export default function ProductArt({ product, color, image, className = 'art' }) {
+// Ảnh sản phẩm: có ảnh thật (admin upload lên Cloudinary) thì dùng, chưa có thì vẽ hình minh hoạ.
+export default function ProductArt({ product, color, image, width = 600, className = 'art' }) {
   const svg = useMemo(
-    () => artSvg(artKind(product), color || product.colors?.[0]?.hex, product.brand_slug === 'apple'),
-    [product, color]
+    () => (image ? '' : artSvg(artKind(product), color || product.colors?.[0]?.hex || product.hex, product.brand_slug === 'apple')),
+    [product, color, image]
   );
 
   if (image) {
     return (
       <div className={className}>
-        <img src={image} alt={product.name} loading="lazy" />
+        <img src={cdn(image, width)} alt={product.name} loading="lazy" decoding="async" />
       </div>
     );
   }

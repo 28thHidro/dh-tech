@@ -1,14 +1,27 @@
 // Gọi backend DH tech.
 // Trên máy: VITE_API_URL để trống, Vite proxy /api sang http://localhost:3000.
-// Trên mạng: VITE_API_URL là địa chỉ backend trên Render (Bước 6).
+// Trên mạng: VITE_API_URL là địa chỉ backend trên Render.
 import { useCallback, useEffect, useState } from 'react';
 
-const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+export const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 // Bộ nhớ đệm nhỏ: cùng một đường dẫn trong 60 giây thì dùng lại kết quả cũ,
 // đỡ gọi server nhiều lần khi người dùng chuyển qua lại giữa các trang.
 const cache = new Map();
 const TTL = 60_000;
+export const clearCache = () => cache.clear();
+
+const NETWORK_ERROR = 'Không kết nối được máy chủ. Nếu vừa mở trang, máy chủ có thể đang khởi động, hãy thử lại sau ít giây.';
+
+async function readJSON(res) {
+  // Địa chỉ API sai thường trả về trang HTML thay vì JSON, báo lỗi rõ ràng thay vì im lặng
+  if (!res.headers.get('content-type')?.includes('application/json')) {
+    throw new Error('Không tìm thấy máy chủ API. Kiểm tra lại địa chỉ backend (VITE_API_URL).');
+  }
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Máy chủ trả lỗi ${res.status}`);
+  return body;
+}
 
 export async function getJSON(path, { signal } = {}) {
   const hit = cache.get(path);
@@ -16,21 +29,29 @@ export async function getJSON(path, { signal } = {}) {
 
   let res;
   try {
-    res = await fetch(BASE + path, { signal });
+    res = await fetch(API_BASE + path, { signal });
   } catch (err) {
     if (err.name === 'AbortError') throw err;
-    throw new Error('Không kết nối được máy chủ. Kiểm tra backend đã chạy chưa.');
+    throw new Error(NETWORK_ERROR);
   }
-  // Địa chỉ API sai thường trả về trang HTML thay vì JSON, báo lỗi rõ ràng thay vì im lặng
-  if (!res.headers.get('content-type')?.includes('application/json')) {
-    throw new Error('Không tìm thấy máy chủ API. Kiểm tra lại địa chỉ backend (VITE_API_URL).');
-  }
-  const body = await res.json();
-  if (!res.ok) throw new Error(body.error || `Máy chủ trả lỗi ${res.status}`);
-
+  const body = await readJSON(res);
   cache.set(path, { data: body, at: Date.now() });
   return body;
 }
+
+export async function postJSON(path, data) {
+  let res;
+  try {
+    res = await fetch(API_BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  } catch {
+    throw new Error(NETWORK_ERROR);
+  }
+  return readJSON(res);
+}
+
+// Ảnh Cloudinary: nhờ Cloudinary tự đổi sang định dạng nhẹ nhất và thu nhỏ theo bề ngang cần dùng
+export const cdn = (url, width = 600) =>
+  url?.includes('/upload/') ? url.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${width}/`) : url;
 
 // Hook dùng trong component: const { data, error, loading, reload } = useApi('/api/products')
 export function useApi(path) {

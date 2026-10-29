@@ -20,9 +20,14 @@ backend/
 ├── src/
 │   ├── server.js            Khởi động Express, gắn các route, xử lý lỗi
 │   ├── db.js                Kết nối PostgreSQL (pool)
+│   ├── middleware/auth.js   Chặn API admin nếu chưa đăng nhập
 │   └── routes/
 │       ├── products.js      /api/products
-│       └── categories.js    /api/categories
+│       ├── categories.js    /api/categories
+│       ├── orders.js        /api/orders
+│       ├── auth.js          /api/auth
+│       └── admin.js         /api/admin/...
+├── scripts/create-admin.js  Tạo tài khoản admin
 ├── .env.example             Mẫu biến môi trường (file .env thật không commit)
 └── package.json
 ```
@@ -35,10 +40,20 @@ backend/
 | GET | `/api/products` | Danh sách sản phẩm | ✅ |
 | GET | `/api/products/:slug` | Chi tiết: phiên bản, màu, tồn kho theo SKU, thông số | ✅ |
 | GET | `/api/categories` | Cây danh mục | ✅ |
-| POST | `/api/orders` | Khách đặt hàng | Bước 4 |
-| POST | `/api/auth/login` | Admin đăng nhập, trả về JWT | Bước 5 |
-| POST / PUT / DELETE | `/api/admin/products` | Quản lý sản phẩm (cần JWT) | Bước 5 |
-| POST | `/api/admin/upload` | Upload ảnh lên Cloudinary (cần JWT) | Bước 5 |
+| POST | `/api/orders` | Khách đặt hàng, trừ kho trong transaction | ✅ |
+| POST | `/api/auth/login` | Admin đăng nhập, trả về JWT | ✅ |
+| GET | `/api/auth/me` | Kiểm tra token | ✅ |
+| GET / POST / PUT / DELETE | `/api/admin/products` | Quản lý sản phẩm (cần JWT) | ✅ |
+| GET / PATCH | `/api/admin/orders` | Xem đơn, đổi trạng thái; huỷ đơn thì trả hàng về kho (cần JWT) | ✅ |
+| POST | `/api/admin/upload-signature` | Chữ ký để upload ảnh thẳng lên Cloudinary (cần JWT) | ✅ |
+
+## Tạo tài khoản admin
+
+```powershell
+npm run create-admin -- admin "mat-khau-it-nhat-10-ky-tu"
+```
+
+Chạy lại với cùng tên đăng nhập để đổi mật khẩu.
 
 ### Tham số của `GET /api/products`
 

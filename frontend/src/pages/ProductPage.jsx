@@ -6,7 +6,7 @@ import Icon from '../components/Icon.jsx';
 import { ErrorBox } from '../components/States.jsx';
 import { useApi } from '../lib/api.js';
 import { useCart } from '../lib/cart.jsx';
-import { percentOff, vnd } from '../lib/format.js';
+import { brandLabel, percentOff, vnd } from '../lib/format.js';
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -43,7 +43,10 @@ function ProductDetail({ p }) {
   const variant = p.variants.find((v) => v.id === variantId);
   const color = p.colors.find((c) => c.id === colorId);
   const stock = stockOf(variantId, colorId);
-  const image = p.images.find((i) => i.color_id === colorId)?.url ?? p.images.find((i) => !i.color_id)?.url;
+  // Ảnh theo màu đang chọn; màu đó chưa có ảnh riêng thì dùng ảnh chung
+  const imageFor = (cId) => p.images.find((i) => i.color_id === cId)?.url ?? p.images.find((i) => !i.color_id)?.url;
+  const image = imageFor(colorId);
+  const sku = p.skus.find((s) => s.variant_id === variantId && s.color_id === colorId);
 
   useEffect(() => { document.title = `${p.name} | DH tech`; return () => { document.title = 'DH tech - Công nghệ đến gần bạn hơn'; }; }, [p.name]);
 
@@ -51,6 +54,7 @@ function ProductDetail({ p }) {
   const others = (related?.items ?? []).filter((x) => x.slug !== p.slug).slice(0, 5);
 
   const addToCart = () => cart.add({
+    skuId: sku?.id, image,
     slug: p.slug, name: p.name, brand_slug: p.brand_slug, category: p.category,
     variantId, variantName: variant.name, colorId, colorName: color.name, hex: color.hex,
     price: variant.price, listPrice: variant.list_price,
@@ -66,17 +70,17 @@ function ProductDetail({ p }) {
     <div className="wrap">
       <div className="page-head compact">
         <div className="crumbs">
-          <Link to="/">Trang chủ</Link> › <Link to={catLink}>{p.brand === 'Apple' ? 'iPhone' : p.brand || p.category_name}</Link> › {p.name}
+          <Link to="/">Trang chủ</Link> › <Link to={catLink}>{p.brand_slug ? brandLabel(p.brand_slug, p.brand, p.category) : p.category_name}</Link> › {p.name}
         </div>
       </div>
 
       <div className="d-grid">
         <div className="panel gallery">
-          <ProductArt product={p} color={color.hex} image={image} className="d-art" />
+          <ProductArt product={p} color={color.hex} image={image} width={900} className="d-art" />
           <div className="thumbs">
             {p.colors.map((c) => (
               <button key={c.id} aria-label={c.name} aria-pressed={c.id === colorId} onClick={() => setColorId(c.id)}>
-                <ProductArt product={p} color={c.hex} className="thumb-art" />
+                <ProductArt product={p} color={c.hex} image={imageFor(c.id)} width={160} className="thumb-art" />
               </button>
             ))}
           </div>
@@ -122,7 +126,7 @@ function ProductDetail({ p }) {
             <ol>
               {p.gift_text && <li>{p.gift_text}</li>}
               <li>Giảm thêm 5% khi mua kèm phụ kiện</li>
-              {p.category === 'dien-thoai' ? <li>Trả góp 0% qua thẻ tín dụng, kỳ hạn 6 – 12 tháng</li> : <li>Miễn phí giao hàng cho đơn từ 300.000đ</li>}
+              {p.category === 'dien-thoai' || p.category === 'laptop' ? <li>Trả góp 0% qua thẻ tín dụng, kỳ hạn 6 – 12 tháng</li> : <li>Miễn phí giao hàng cho đơn từ 300.000đ</li>}
             </ol>
           </div>
 
@@ -133,7 +137,7 @@ function ProductDetail({ p }) {
             </button>
             <button className="btn btn-line" disabled={stock === 0} onClick={addToCart} aria-label="Thêm vào giỏ hàng"><Icon name="cartPlus" size={22} /></button>
           </div>
-          {p.category === 'dien-thoai' && (
+          {(p.category === 'dien-thoai' || p.category === 'laptop') && (
             <div className="inst-row">
               <button className="btn" onClick={() => cart.notify('Gọi 1900 0000 để được tư vấn trả góp')}>
                 <span className="num">Trả góp 0% · từ {vnd(Math.round(variant.price / 12 / 1000) * 1000)}/tháng</span>
@@ -146,9 +150,11 @@ function ProductDetail({ p }) {
       <div className="d-grid">
         <div className="panel">
           <h2>Thông số kỹ thuật</h2>
-          <table className="specs"><tbody>
-            {p.specs.map((s) => <tr key={s.label}><td>{s.label}</td><td>{s.value}</td></tr>)}
-          </tbody></table>
+          {p.specs.length ? (
+            <table className="specs"><tbody>
+              {p.specs.map((s) => <tr key={s.label}><td>{s.label}</td><td>{s.value}</td></tr>)}
+            </tbody></table>
+          ) : <p className="muted">Thông số chi tiết đang được cập nhật. Gọi 1900 0000 để được tư vấn.</p>}
         </div>
         <div className="panel">
           <h2>Cam kết của DH tech</h2>

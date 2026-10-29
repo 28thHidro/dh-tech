@@ -6,6 +6,7 @@ const PATHS = {
   cartPlus: <><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6" /><path d="M14 2v5M11.5 4.5h5" /></>,
   home: <path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
   grid: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
+  laptop: <><rect x="4" y="5" width="16" height="11" rx="1.5" /><path d="M2 19h20" /></>,
   phone: <><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18.5h2" /></>,
   apple: <><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><rect x="9" y="5" width="3.5" height="3.5" rx="1" /></>,
   samsung: <><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><circle cx="10" cy="6" r="1" /><circle cx="10" cy="9" r="1" /></>,

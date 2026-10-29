@@ -7,3 +7,9 @@ export const percentOff = (listPrice, discount) =>
 
 // Rút gọn tên phiên bản trên thẻ sản phẩm: "12GB · 256GB" -> "256GB"
 export const shortVariant = (name) => name.replace(/^\d+GB · /, '');
+
+// Tên hiển thị của hãng theo ngữ cảnh: Apple trong điện thoại là "iPhone", trong laptop là "MacBook"
+export function brandLabel(brandSlug, brandName, category) {
+  if (brandSlug === 'apple') return category === 'laptop' ? 'MacBook' : category === 'dien-thoai' ? 'iPhone' : 'Apple';
+  return brandName;
+}

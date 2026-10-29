@@ -3,12 +3,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 const CartContext = createContext(null);
-const KEY = 'dh-cart-v2';
+// Đổi tên khoá khi cấu trúc giỏ thay đổi (v3 thêm skuId để đặt hàng thật), giỏ cũ sẽ bị bỏ qua
+const KEY = 'dh-cart-v3';
 
 function load() {
   try {
     const items = JSON.parse(localStorage.getItem(KEY) || '[]');
-    return Array.isArray(items) ? items : [];
+    return Array.isArray(items) ? items.filter((i) => Number.isInteger(i?.skuId)) : [];
   } catch {
     return [];
   }
@@ -31,7 +32,7 @@ export function CartProvider({ children }) {
     timer.current = setTimeout(() => setToast(''), 2200);
   }, []);
 
-  // item: { slug, name, brand_slug, category, variantId, variantName, colorId, colorName, hex, price, listPrice }
+  // item: { skuId, image, slug, name, brand_slug, category, variantId, variantName, colorId, colorName, hex, price, listPrice }
   const add = useCallback((item) => {
     const key = `${item.slug}|${item.variantId}|${item.colorId}`;
     setItems((prev) => {
