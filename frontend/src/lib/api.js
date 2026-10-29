@@ -49,9 +49,17 @@ export async function postJSON(path, data) {
   return readJSON(res);
 }
 
-// Ảnh Cloudinary: nhờ Cloudinary tự đổi sang định dạng nhẹ nhất và thu nhỏ theo bề ngang cần dùng
-export const cdn = (url, width = 600) =>
-  url?.includes('/upload/') ? url.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${width}/`) : url;
+// Ảnh Cloudinary: nhờ Cloudinary xử lý ảnh trước khi gửi về trình duyệt (ảnh gốc giữ nguyên):
+//   e_trim       cắt bỏ viền trắng / trong suốt thừa quanh sản phẩm
+//   c_pad (1)    đặt sản phẩm vào giữa khung vuông nhỏ hơn một chút
+//   c_pad (2)    thêm lề trắng đều 4 cạnh -> mọi ảnh cùng cỡ, cùng vị trí dù cắt tay lệch nhau
+//   f_auto,q_auto  tự chọn định dạng và chất lượng nhẹ nhất
+export const cdn = (url, width = 600) => {
+  if (!url?.includes('/upload/')) return url;
+  const inner = Math.round(width * 0.9);
+  const steps = `e_trim:10/c_pad,w_${inner},h_${inner},b_white/c_pad,w_${width},h_${width},b_white/f_auto,q_auto`;
+  return url.replace('/upload/', `/upload/${steps}/`);
+};
 
 // Hook dùng trong component: const { data, error, loading, reload } = useApi('/api/products')
 export function useApi(path) {
