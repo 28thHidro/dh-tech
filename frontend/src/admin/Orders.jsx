@@ -68,7 +68,7 @@ export default function Orders() {
             </header>
             <div className="order-body">
               <div className="cust">
-                <div><b>{o.customer_name}</b></div>
+                <div><b>{o.customer_name}</b>{o.customer_id && <span className="pill ok member" title="Khách đã đăng nhập khi đặt hàng">Thành viên</span>}</div>
                 <div className="num phone">{o.phone}</div>
                 {o.address && <div>{o.address}</div>}
                 {o.note && <div className="note">Ghi chú: {o.note}</div>}

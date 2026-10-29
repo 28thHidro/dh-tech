@@ -42,8 +42,9 @@ export default function AdminLayout() {
           <a href="/" target="_blank" rel="noreferrer"><Icon name="home" size={18} />Xem website</a>
         </nav>
         <div className="admin-user">
-          <span>{admin?.username}</span>
-          <button onClick={logout}>Đăng xuất</button>
+          <span className="au-avatar" aria-hidden="true">{(admin?.username || '?').charAt(0).toUpperCase()}</span>
+          <span className="au-name"><b>{admin?.username}</b><small>Quản trị viên</small></span>
+          <button onClick={logout} aria-label="Đăng xuất" title="Đăng xuất"><Icon name="logout" size={18} /><span>Đăng xuất</span></button>
         </div>
       </aside>
       <main className="admin-main">

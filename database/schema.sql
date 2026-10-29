@@ -4,7 +4,7 @@
 -- Chạy lại nhiều lần được: các bảng cũ sẽ bị xoá và tạo lại từ đầu.
 -- =====================================================================
 
-DROP TABLE IF EXISTS order_items, orders, admins,
+DROP TABLE IF EXISTS order_items, orders, customers, admins,
   product_sections, product_specs, product_images, product_skus,
   product_colors, product_variants, products,
   brands, categories CASCADE;
@@ -136,10 +136,23 @@ CREATE TABLE admins (
 );
 
 -- ---------------------------------------------------------------------
+-- Tài khoản khách hàng (đăng ký để xem lại đơn hàng)
+-- ---------------------------------------------------------------------
+CREATE TABLE customers (
+  id             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  full_name      VARCHAR(100) NOT NULL,
+  phone          VARCHAR(15)  NOT NULL UNIQUE,
+  email          VARCHAR(120) UNIQUE,
+  password_hash  VARCHAR(100) NOT NULL,
+  created_at     TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------
 -- Đơn hàng
 -- ---------------------------------------------------------------------
 CREATE TABLE orders (
   id             INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  customer_id    INT REFERENCES customers(id) ON DELETE SET NULL,  -- trống nếu mua không đăng nhập
   customer_name  VARCHAR(100) NOT NULL,
   phone          VARCHAR(15) NOT NULL,
   address        TEXT,
@@ -178,3 +191,4 @@ CREATE INDEX idx_images_product     ON product_images(product_id);
 CREATE INDEX idx_specs_product      ON product_specs(product_id);
 CREATE INDEX idx_sections_product   ON product_sections(product_id);
 CREATE INDEX idx_order_items_order  ON order_items(order_id);
+CREATE INDEX idx_orders_customer    ON orders(customer_id);

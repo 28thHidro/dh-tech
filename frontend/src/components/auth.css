@@ -1,0 +1,100 @@
+/* =====================================================================
+   Màn hình đăng nhập / đăng ký (khách hàng và quản trị)
+   ===================================================================== */
+.auth { min-height: 100dvh; background: #0C0B0A; color: #F3EFE9; display: flex; flex-direction: column; overflow: hidden; transition: background .6s; }
+.auth.lit { background: #14110D; }
+.auth-top { display: flex; justify-content: space-between; align-items: center; padding: 20px max(16px, calc(50% - 560px)); }
+.auth-top img { height: 34px; width: auto; display: block; opacity: .6; transition: opacity .6s; }
+.lit .auth-top img { opacity: 1; }
+.auth-back { font-size: 13.5px; color: #A39B90; }
+.auth-back:hover { color: #F28C28; }
+
+.auth-main { flex: 1; width: min(1120px, 100%); margin: 0 auto; padding: 8px 16px 40px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 410px); gap: 24px 48px; align-items: center; }
+
+/* Cột trái: chữ lớn + đèn */
+.auth-hero { position: relative; display: flex; flex-direction: column; }
+.auth-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #A39B90; }
+.auth-eyebrow i { width: 7px; height: 7px; border-radius: 50%; background: #5A524A; transition: background .4s, box-shadow .4s; }
+.lit .auth-eyebrow i { background: #F28C28; box-shadow: 0 0 10px #F28C28; }
+.auth-hero h1 { margin: 14px 0 12px; font-size: clamp(44px, 7vw, 92px); line-height: 1.04; letter-spacing: -.03em; text-transform: uppercase; display: flex; flex-direction: column; }
+.auth-hero .outline { color: transparent; -webkit-text-stroke: 1.5px rgba(243, 239, 233, .45); }
+.auth-hero .solid { color: #3A352F; transition: color .6s; }
+.lit .auth-hero .solid { color: #F3EFE9; }
+.auth-hero p { margin: 0; max-width: 38ch; color: #8C8378; font-size: 15px; transition: color .6s; }
+.lit .auth-hero p { color: #B9B0A4; }
+
+/* Đèn bàn: khung 220 x 320, bóng đèn ở toạ độ (152, 108) */
+.lamp { position: relative; width: 220px; height: 320px; flex-shrink: 0; align-self: flex-end; margin-top: -40px; }
+.lamp-svg { position: relative; z-index: 2; width: 220px; height: 320px; display: block; }
+.lamp-bulb { transition: fill .3s, filter .3s; }
+.lit .lamp-bulb { filter: drop-shadow(0 0 10px #FFD58A) drop-shadow(0 0 26px #FFB347); }
+.lamp-cone { position: absolute; z-index: 1; left: 152px; top: 100px; width: 620px; height: 460px; transform-origin: 0 0; transform: rotate(-6deg); clip-path: polygon(0 0, 100% 2%, 100% 86%, 0 5%); background: linear-gradient(90deg, rgba(255, 214, 150, .4), rgba(255, 214, 150, .07) 70%, rgba(255, 214, 150, 0)); opacity: 0; transition: opacity .35s; pointer-events: none; filter: blur(3px); }
+.lit .lamp-cone { opacity: 1; animation: lamp-flicker .5s steps(1) 1; }
+@keyframes lamp-flicker { 0% { opacity: .2; } 20% { opacity: .9; } 35% { opacity: .3; } 55% { opacity: 1; } }
+
+/* Dây kéo: --dy là khoảng đang kéo xuống */
+.lamp-cord { position: absolute; z-index: 3; left: 128px; top: 112px; width: 36px; padding: 0; border: 0; background: none; cursor: grab; display: flex; flex-direction: column; align-items: center; touch-action: none; outline: none; }
+.lamp-cord:active { cursor: grabbing; }
+.cord-line { width: 2px; height: calc(74px + var(--dy, 0px)); background: #8C8378; transition: height .35s cubic-bezier(.3, 1.6, .5, 1); }
+.lamp-cord.dragging .cord-line { transition: none; }
+.cord-knob { width: 18px; height: 18px; border-radius: 50%; background: #F28C28; border: 3px solid #141414; box-shadow: 0 0 0 5px rgba(242, 140, 40, .18); transition: box-shadow .2s, transform .2s; }
+.lamp-cord:hover .cord-knob, .lamp-cord:focus-visible .cord-knob { box-shadow: 0 0 0 8px rgba(242, 140, 40, .3); }
+.lamp-cord.ready .cord-knob { transform: scale(1.15); box-shadow: 0 0 0 10px rgba(242, 140, 40, .35); }
+.lamp-hint { position: absolute; z-index: 3; left: 104px; top: 214px; white-space: nowrap; font-size: 12.5px; font-weight: 700; color: #F28C28; animation: lamp-hint 1.6s ease-in-out infinite; pointer-events: none; }
+.lamp-hint.nudge { animation: lamp-nudge .4s ease-in-out 2; }
+@keyframes lamp-hint { 0%, 100% { transform: translateY(0); opacity: .7; } 50% { transform: translateY(5px); opacity: 1; } }
+@keyframes lamp-nudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* Thẻ form bên phải */
+.auth-card { position: relative; z-index: 2; background: rgba(28, 25, 22, .92); border: 1px solid #2E2A25; border-radius: var(--r-lg, 22px); padding: 22px 24px 24px; display: flex; flex-direction: column; transition: border-color .5s, box-shadow .5s; }
+.lit .auth-card { border-color: rgba(255, 200, 130, .3); box-shadow: -40px 20px 90px -30px rgba(255, 190, 110, .35); }
+.auth-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #6E665C; margin-bottom: 18px; }
+.auth-status { display: inline-flex; align-items: center; gap: 6px; }
+.auth-status i { width: 7px; height: 7px; border-radius: 50%; background: #5A524A; }
+.auth-status.on { color: #F2B068; }
+.auth-status.on i { background: #F28C28; box-shadow: 0 0 8px #F28C28; }
+.auth-card h2 { margin: 0; font-size: 28px; letter-spacing: -.01em; }
+.auth-sub { margin: 4px 0 18px; font-size: 14px; color: #8C8378; }
+.auth-lock { display: flex; align-items: center; gap: 8px; margin: -6px 0 14px; font-size: 13px; font-weight: 600; color: #F2B068; background: rgba(242, 140, 40, .08); border: 1px dashed rgba(242, 140, 40, .35); border-radius: var(--r-sm, 8px); padding: 8px 10px; }
+.auth-fields { border: 0; margin: 0; padding: 0; min-width: 0; transition: opacity .5s, filter .5s; }
+.auth-fields:disabled { opacity: .35; filter: saturate(.4); }
+.auth-fields form { display: grid; gap: 14px; }
+
+/* Ô nhập */
+.af label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #8C8378; margin-bottom: 6px; }
+.af-box { display: flex; align-items: center; gap: 10px; background: #110F0D; border: 1px solid #2E2A25; border-radius: var(--r, 14px); padding: 0 12px; color: #6E665C; transition: border-color .2s, box-shadow .2s; }
+.af-box:focus-within { border-color: #F28C28; box-shadow: 0 0 0 3px rgba(242, 140, 40, .18); color: #F28C28; }
+.af-box input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: #F3EFE9; font: inherit; font-size: 15px; padding: 12px 0; }
+.af-box input::placeholder { color: #5A524A; }
+.af-eye { background: none; border: 0; padding: 4px; color: #6E665C; display: grid; place-items: center; }
+.af-eye:hover { color: #F3EFE9; }
+
+.auth-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: #A39B90; }
+.auth-row label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.auth-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #F28C28; }
+.auth-row a, .auth-row button.linkish { color: #F2B068; background: none; border: 0; padding: 0; font: inherit; }
+.auth-submit { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; border: 0; border-radius: 999px; padding: 14px 20px; background: #F28C28; color: #1A1208; font-weight: 700; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; transition: background .2s, transform .2s; }
+.auth-submit:hover:not(:disabled) { background: #E07B16; }
+.auth-submit:hover:not(:disabled) svg { transform: translateX(3px); }
+.auth-submit svg { transition: transform .2s; }
+.auth-submit:disabled { cursor: not-allowed; }
+.auth-note { margin: 0; font-size: 12.5px; color: #8C8378; background: #110F0D; border-radius: var(--r-sm, 8px); padding: 8px 10px; }
+.auth-switch { text-align: center; font-size: 13.5px; color: #8C8378; margin: 4px 0 0; }
+.auth-switch a { color: #F2B068; font-weight: 700; }
+.auth .form-error { margin: 0; }
+
+/* Điện thoại: đèn ở trên, chiếu xuống form */
+@media (max-width: 860px) {
+  .auth-main { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 0; }
+  .auth-hero { align-items: center; text-align: center; }
+  .auth-hero h1 { font-size: clamp(38px, 11vw, 56px); margin: 10px 0 8px; }
+  .auth-hero p { font-size: 14px; }
+  .lamp { align-self: center; width: 150px; height: 218px; margin: 4px 70px 0 0; }
+  .lamp-svg { width: 150px; height: 218px; }
+  .lamp-cone { left: 104px; top: 70px; width: 360px; height: 340px; transform: rotate(58deg); }
+  .lamp-cord { left: 86px; top: 74px; }
+  .cord-line { height: calc(56px + var(--dy, 0px)); }
+  .lamp-hint { left: 70px; top: 150px; }
+  .auth-card { margin-top: -6px; }
+}
+@media (prefers-reduced-motion: reduce) { .lamp-hint, .lit .lamp-cone { animation: none; } }

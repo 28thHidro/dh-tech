@@ -8,6 +8,7 @@ import CartDrawer from './CartDrawer.jsx';
 import MascotDock from './MascotDock.jsx';
 import { useCart } from '../lib/cart.jsx';
 import { getToken } from '../lib/admin.js';
+import { initial, useAccount } from '../lib/account.jsx';
 
 function Logo() {
   return <img className="logo" src={logo} alt="DH tech" width="600" height="135" />;
@@ -68,6 +69,7 @@ export default function Layout() {
   const { pathname, search } = useLocation();
   const searchRef = useRef();
   const isAdmin = Boolean(getToken());
+  const { user } = useAccount();
 
   // Sang trang khác thì cuộn lên đầu (đổi bộ lọc trên cùng trang thì giữ nguyên vị trí)
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
@@ -106,6 +108,15 @@ export default function Layout() {
           {isAdmin && (
             <Link className="hbtn admin-link" to="/admin" aria-label="Về trang quản trị">
               <Icon name="grid" size={18} /><span className="lbl">Quản trị</span>
+            </Link>
+          )}
+          {user ? (
+            <Link className="hbtn acc-btn" to="/tai-khoan" aria-label="Tài khoản của tôi">
+              <span className="acc-dot" aria-hidden="true">{initial(user.full_name)}</span><span className="lbl">{user.full_name.trim().split(/\s+/).pop()}</span>
+            </Link>
+          ) : (
+            <Link className="hbtn acc-btn" to="/dang-nhap" aria-label="Đăng nhập">
+              <Icon name="user" size={18} /><span className="lbl">Đăng nhập</span>
             </Link>
           )}
           <button className="hbtn cart-btn" onClick={() => cart.setOpen(true)} aria-label="Mở giỏ hàng">
@@ -149,6 +160,7 @@ export default function Layout() {
         <Link to="/"><Icon name="home" size={21} />Trang chủ</Link>
         <button onClick={() => setMenuOpen(true)}><Icon name="grid" size={21} />Danh mục</button>
         <button onClick={() => { window.scrollTo(0, 0); searchRef.current?.focus(); }}><Icon name="search" size={21} />Tìm kiếm</button>
+        <Link to={user ? '/tai-khoan' : '/dang-nhap'}><Icon name="user" size={21} />{user ? 'Tài khoản' : 'Đăng nhập'}</Link>
         <button onClick={() => cart.setOpen(true)}><Icon name="cart" size={21} />Giỏ hàng<span className="badge num">{cart.count}</span></button>
       </nav>
 

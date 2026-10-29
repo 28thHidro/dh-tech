@@ -5,10 +5,12 @@
 // vì ai cũng có thể sửa request để mua iPhone với giá 1.000đ.
 import { Router } from 'express';
 import { pool } from '../db.js';
+import { optionalCustomer } from '../middleware/auth.js';
 
 const router = Router();
 
-router.post('/', async (req, res) => {
+// Khách đã đăng nhập thì đơn được gắn vào tài khoản, để xem lại trong trang Tài khoản
+router.post('/', optionalCustomer, async (req, res) => {
   const { customer_name, phone, address, note, items } = req.body ?? {};
 
   // 1. Kiểm tra dữ liệu đầu vào
@@ -64,9 +66,9 @@ router.post('/', async (req, res) => {
 
     const total = skus.reduce((sum, s) => sum + s.price * wanted.get(s.id), 0);
     const { rows: [order] } = await client.query(
-      `INSERT INTO orders (customer_name, phone, address, note, total)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at`,
-      [name, tel, address?.toString().slice(0, 300) || null, note?.toString().slice(0, 300) || null, total]
+      `INSERT INTO orders (customer_id, customer_name, phone, address, note, total)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at`,
+      [req.customer?.id ?? null, name, tel, address?.toString().slice(0, 300) || null, note?.toString().slice(0, 300) || null, total]
     );
 
     for (const s of skus) {

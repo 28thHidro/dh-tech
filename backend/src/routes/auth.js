@@ -3,28 +3,22 @@
 //   GET  /api/auth/me      kiểm tra token còn dùng được không
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
-import { requireAdmin } from '../middleware/auth.js';
+import { requireAdmin, signAdmin } from '../middleware/auth.js';
+import { createLimiter } from '../middleware/rateLimit.js';
 
 const router = Router();
 
-// Chống dò mật khẩu: mỗi địa chỉ IP sai quá 5 lần thì khoá 15 phút.
-// Lưu trong bộ nhớ, đủ dùng cho một server. Hệ thống lớn sẽ dùng Redis.
-const MAX_FAILS = 5;
-const LOCK_MS = 15 * 60 * 1000;
-const fails = new Map();
+// Chống dò mật khẩu: mỗi địa chỉ IP sai quá 5 lần thì khoá 15 phút
+const limiter = createLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
 
 // Mã băm giả, dùng khi tên đăng nhập không tồn tại (xem giải thích bên dưới)
 const DUMMY_HASH = bcrypt.hashSync('khong-phai-mat-khau-that', 12);
 
 router.post('/login', async (req, res) => {
   const ip = req.ip;
-  const record = fails.get(ip);
-  if (record && record.count >= MAX_FAILS && Date.now() < record.until) {
-    const minutes = Math.ceil((record.until - Date.now()) / 60000);
-    return res.status(429).json({ error: `Sai quá nhiều lần. Thử lại sau ${minutes} phút.` });
-  }
+  const minutes = limiter.blockedMinutes(ip);
+  if (minutes) return res.status(429).json({ error: `Sai quá nhiều lần. Thử lại sau ${minutes} phút.` });
 
   const { username, password } = req.body ?? {};
   if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
@@ -38,17 +32,14 @@ router.post('/login', async (req, res) => {
   const ok = await bcrypt.compare(password, hash);
 
   if (!rows[0] || !ok) {
-    const r = fails.get(ip) ?? { count: 0, until: 0 };
-    r.count = Date.now() > r.until ? 1 : r.count + 1;
-    r.until = Date.now() + LOCK_MS;
-    fails.set(ip, r);
+    limiter.hit(ip);
     // Không nói rõ sai tên hay sai mật khẩu
     return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
   }
 
-  fails.delete(ip);
+  limiter.reset(ip);
   const admin = { id: rows[0].id, username: rows[0].username };
-  const token = jwt.sign(admin, process.env.JWT_SECRET, { expiresIn: '8h' });
+  const token = signAdmin(admin);
   res.json({ token, admin });
 });
 

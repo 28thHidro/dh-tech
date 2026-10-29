@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import ProductArt from './ProductArt.jsx';
 import { useCart } from '../lib/cart.jsx';
-import { clearCache, postJSON } from '../lib/api.js';
+import { clearCache } from '../lib/api.js';
+import { accountFetch, useAccount } from '../lib/account.jsx';
 import { vnd } from '../lib/format.js';
 
 export default function CartDrawer() {
   const cart = useCart();
+  const { user } = useAccount();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
@@ -18,13 +21,14 @@ export default function CartDrawer() {
     setError('');
     try {
       // Chỉ gửi mã SKU và số lượng. Giá do server tự tính từ database.
-      const result = await postJSON('/api/orders', {
+      // accountFetch tự gửi kèm token nếu khách đã đăng nhập, để đơn được lưu vào tài khoản
+      const result = await accountFetch('/api/orders', { method: 'POST', body: {
         customer_name: f.get('name'),
         phone: f.get('phone'),
         address: f.get('address'),
         note: f.get('note'),
         items: cart.items.map((i) => ({ sku_id: i.skuId, quantity: i.qty })),
-      });
+      } });
       cart.clear();
       clearCache(); // tồn kho vừa thay đổi
       setOrder(result);
@@ -45,6 +49,9 @@ export default function CartDrawer() {
             <div className="ok">
               <b>Đặt hàng thành công. Mã đơn #{order.id}</b><br />
               Tổng tiền <span className="num">{vnd(order.total)}</span>. DH tech sẽ gọi lại để xác nhận trong ít phút.
+              {user
+                ? <><br /><Link to="/tai-khoan" onClick={close}>Xem đơn trong Tài khoản ›</Link></>
+                : <><br /><Link to="/dang-ky" onClick={close}>Tạo tài khoản để theo dõi đơn lần sau ›</Link></>}
             </div>
           ) : cart.items.length === 0 ? (
             <div className="cart-empty">Giỏ hàng đang trống.<br />Chọn một sản phẩm bạn thích để bắt đầu.</div>
@@ -72,9 +79,10 @@ export default function CartDrawer() {
         {!order && cart.items.length > 0 && (
           <div className="foot">
             <div className="total"><span>Tạm tính</span><b className="num">{vnd(cart.total)}</b></div>
+            {!user && <p className="cart-login"><Link to="/dang-nhap" onClick={close}>Đăng nhập</Link> để lưu đơn và điền sẵn thông tin.</p>}
             <form className="form" onSubmit={submit}>
-              <input id="oName" name="name" required minLength={2} maxLength={100} placeholder="Họ và tên" autoComplete="name" />
-              <input id="oPhone" name="phone" required placeholder="Số điện thoại" inputMode="tel" autoComplete="tel" pattern="0[0-9]{9}" title="Số điện thoại gồm 10 chữ số, bắt đầu bằng 0" />
+              <input id="oName" name="name" defaultValue={user?.full_name ?? ''} required minLength={2} maxLength={100} placeholder="Họ và tên" autoComplete="name" />
+              <input id="oPhone" name="phone" defaultValue={user?.phone ?? ''} required placeholder="Số điện thoại" inputMode="tel" autoComplete="tel" pattern="0[0-9]{9}" title="Số điện thoại gồm 10 chữ số, bắt đầu bằng 0" />
               <input id="oAddress" name="address" maxLength={300} placeholder="Địa chỉ nhận hàng (không bắt buộc)" autoComplete="street-address" />
               <input id="oNote" name="note" maxLength={300} placeholder="Ghi chú (không bắt buộc)" />
               {error && <div className="form-error" role="alert">{error}</div>}

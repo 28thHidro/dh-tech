@@ -8,6 +8,7 @@ import categoriesRouter from './routes/categories.js';
 import ordersRouter from './routes/orders.js';
 import authRouter from './routes/auth.js';
 import adminRouter from './routes/admin.js';
+import accountRouter from './routes/account.js';
 
 // Thiếu khoá ký token thì không cho chạy, tránh lỡ chạy server mà ai cũng giả mạo được admin
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
@@ -44,6 +45,7 @@ app.use('/api/products', productsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/account', accountRouter);
 
 // Chỉ admin đã đăng nhập: requireAdmin chặn ở cửa trước khi vào bất kỳ route nào bên trong
 app.use('/api/admin', requireAdmin, adminRouter);
